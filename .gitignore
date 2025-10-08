@@ -44,6 +44,19 @@ desktop.ini
 # Downloaded files and temp
 DouyinLiveRecorder_v4.0.6/
 
+# GPT-SoVITS specific
+# Model weights (大文件)
+**/GPT_weights*/
+**/SoVITS_weights*/
+
+# Training outputs
+logs/
+output/
+TEMP/
+
+# Runtime and cache
+runtime/
+
 # Environment variables
 .env
 .env.local
