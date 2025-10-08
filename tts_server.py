@@ -35,10 +35,12 @@ app.add_middleware(
 # 静态文件目录
 static_dir = os.path.join(os.path.dirname(__file__), 'static')
 outputs_dir = os.path.join(os.path.dirname(__file__), 'outputs')
+recordings_dir = os.path.join(os.path.dirname(__file__), 'DouyinLiveRecorder_v4.0.6', 'downloads', '抖音直播', 'SL_林木垚Meow')
 
 # 挂载静态文件
 app.mount('/static', StaticFiles(directory=static_dir), name='static')
 app.mount('/outputs', StaticFiles(directory=outputs_dir), name='outputs')
+app.mount('/recordings', StaticFiles(directory=recordings_dir), name='recordings')
 
 # GPT-SoVITS API 配置
 GPT_SOVITS_API_URL = "http://127.0.0.1:9880"
@@ -351,6 +353,52 @@ async def get_status():
             "emotions_count": len(EMOTION_CONFIGS)
         }
     }
+
+@app.get("/api/recordings")
+async def get_recordings():
+    """获取录播列表"""
+    try:
+        recordings = []
+
+        if os.path.exists(recordings_dir):
+            for filename in os.listdir(recordings_dir):
+                # 只处理视频文件
+                if filename.endswith(('.mp4', '.ts', '.flv')):
+                    filepath = os.path.join(recordings_dir, filename)
+                    stat = os.stat(filepath)
+
+                    # 解析文件名获取日期时间
+                    # 格式: SL_林木垚Meow_2025-10-08_15-02-38.mp4
+                    try:
+                        parts = filename.replace('.mp4', '').replace('.ts', '').replace('.flv', '').split('_')
+                        if len(parts) >= 3:
+                            date_str = parts[-2]  # 2025-10-08
+                            time_str = parts[-1]  # 15-02-38
+                            datetime_str = f"{date_str} {time_str.replace('-', ':')}"
+                        else:
+                            datetime_str = ""
+                    except:
+                        datetime_str = ""
+
+                    recordings.append({
+                        "filename": filename,
+                        "url": f"/recordings/{filename}",
+                        "size": stat.st_size,
+                        "size_mb": round(stat.st_size / 1024 / 1024, 2),
+                        "created_at": datetime.fromtimestamp(stat.st_ctime).isoformat(),
+                        "date": datetime_str
+                    })
+
+        # 按创建时间倒序排序
+        recordings.sort(key=lambda x: x["created_at"], reverse=True)
+
+        return {
+            "success": True,
+            "data": recordings
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     import uvicorn

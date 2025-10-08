@@ -344,3 +344,116 @@ async function checkServiceStatus() {
         console.error('检查服务状态失败:', error);
     }
 }
+
+// ========== 录播功能 ==========
+
+// 加载录播列表
+async function loadRecordings() {
+    const container = document.getElementById('recordingsList');
+
+    try {
+        container.innerHTML = `
+            <div class="text-center text-muted py-5">
+                <div class="spinner-border" role="status"></div>
+                <p class="mt-3">加载中...</p>
+            </div>
+        `;
+
+        const response = await fetch('/api/recordings');
+        const result = await response.json();
+
+        if (result.success) {
+            renderRecordings(result.data);
+        } else {
+            container.innerHTML = `
+                <div class="text-center text-danger py-5">
+                    <i class="bi bi-exclamation-circle display-4"></i>
+                    <p class="mt-3">加载失败</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('加载录播列表失败:', error);
+        container.innerHTML = `
+            <div class="text-center text-danger py-5">
+                <i class="bi bi-exclamation-circle display-4"></i>
+                <p class="mt-3">加载失败，请稍后重试</p>
+            </div>
+        `;
+    }
+}
+
+// 渲染录播列表
+function renderRecordings(recordings) {
+    const container = document.getElementById('recordingsList');
+
+    if (recordings.length === 0) {
+        container.innerHTML = `
+            <div class="text-center text-muted py-5">
+                <i class="bi bi-camera-video display-4"></i>
+                <p class="mt-3">暂无录播</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = '';
+
+    recordings.forEach(recording => {
+        const item = document.createElement('div');
+        item.className = 'recording-item';
+
+        item.innerHTML = `
+            <div class="row align-items-center">
+                <div class="col-md-3">
+                    <div class="recording-thumbnail" style="height: 120px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-play-circle-fill" style="font-size: 3rem; color: white;"></i>
+                    </div>
+                </div>
+                <div class="col-md-6 recording-info mt-3 mt-md-0">
+                    <h6>${recording.filename}</h6>
+                    <div class="recording-meta">
+                        <span class="me-3">
+                            <i class="bi bi-calendar3"></i>
+                            ${recording.date || '未知日期'}
+                        </span>
+                        <span class="badge bg-info">
+                            <i class="bi bi-hdd"></i>
+                            ${recording.size_mb} MB
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-3 text-md-end mt-3 mt-md-0">
+                    <button class="btn btn-primary mb-2 w-100" onclick="playVideo('${recording.url}', '${recording.filename}')">
+                        <i class="bi bi-play-fill"></i> 在线观看
+                    </button>
+                    <a href="${recording.url}" download="${recording.filename}" class="btn btn-success w-100">
+                        <i class="bi bi-download"></i> 下载
+                    </a>
+                </div>
+            </div>
+        `;
+
+        container.appendChild(item);
+    });
+}
+
+// 播放视频
+function playVideo(url, filename) {
+    const modal = new bootstrap.Modal(document.getElementById('videoModal'));
+    const videoPlayer = document.getElementById('videoPlayer');
+    const videoSource = document.getElementById('videoSource');
+    const modalTitle = document.getElementById('videoModalTitle');
+
+    videoSource.src = url;
+    videoPlayer.load();
+    modalTitle.textContent = filename;
+
+    modal.show();
+
+    // 模态框关闭时暂停视频
+    document.getElementById('videoModal').addEventListener('hidden.bs.modal', function () {
+        videoPlayer.pause();
+        videoSource.src = '';
+    });
+}

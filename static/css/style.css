@@ -332,6 +332,97 @@ body {
     }
 }
 
+/* 标签页样式 */
+.tab-nav {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 10px;
+}
+
+.tab-button {
+    color: white !important;
+    font-weight: 600;
+    border-radius: 10px !important;
+    padding: 15px 30px;
+    transition: all 0.3s;
+    border: 2px solid transparent !important;
+}
+
+.tab-button:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.tab-button.active {
+    background: white !important;
+    color: #667eea !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* 录播卡片样式 */
+.recordings-card {
+    animation: fadeIn 0.6s ease-out;
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.recording-item {
+    padding: 20px;
+    border: 2px solid #f0f0f0;
+    border-radius: 15px;
+    margin-bottom: 20px;
+    transition: all 0.3s;
+    background: white;
+}
+
+.recording-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    border-color: #667eea;
+}
+
+.recording-thumbnail {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #f8f9fa;
+}
+
+.recording-thumbnail::before {
+    content: '▶';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 3rem;
+    color: white;
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 1;
+}
+
+.recording-item:hover .recording-thumbnail::before {
+    opacity: 0.9;
+}
+
+.recording-info h6 {
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.recording-meta {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.recording-meta .badge {
+    font-size: 0.85rem;
+    padding: 5px 12px;
+}
+
 /* 动画效果 */
 @keyframes fadeIn {
     from {
