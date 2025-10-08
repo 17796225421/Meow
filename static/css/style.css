@@ -1,0 +1,295 @@
+/* AI 语音生成器 - 样式文件 */
+
+/* 全局样式 */
+body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding: 20px 0;
+}
+
+.container {
+    max-width: 900px;
+}
+
+/* 头部样式 */
+.header {
+    margin: 40px 0;
+    color: white;
+}
+
+.title {
+    font-size: 3rem;
+    font-weight: 700;
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+    margin-bottom: 10px;
+}
+
+.title .icon {
+    display: inline-block;
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.subtitle {
+    font-size: 1.2rem;
+    opacity: 0.95;
+    margin-bottom: 0;
+}
+
+/* 主卡片样式 */
+.main-card {
+    margin-bottom: 30px;
+}
+
+.card {
+    border: none;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.card-body {
+    background: white;
+}
+
+/* 文本输入框样式 */
+#textInput {
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    transition: all 0.3s;
+    resize: none;
+}
+
+#textInput:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+#charCount {
+    font-weight: 600;
+    color: #667eea;
+}
+
+/* 情感按钮网格 */
+.emotion-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.emotion-btn {
+    padding: 20px 15px;
+    border: 3px solid #e0e0e0;
+    border-radius: 15px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+}
+
+.emotion-btn:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.emotion-btn.active {
+    border-color: #667eea;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    transform: scale(1.05);
+}
+
+.emotion-btn .emoji {
+    font-size: 2.5rem;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.emotion-btn .name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.emotion-btn .desc {
+    font-size: 0.85rem;
+    opacity: 0.8;
+    display: block;
+}
+
+.emotion-btn.active .desc {
+    opacity: 1;
+}
+
+/* 生成按钮样式 */
+.generate-btn {
+    padding: 15px 60px;
+    font-size: 1.3rem;
+    font-weight: 700;
+    border-radius: 50px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+
+.generate-btn:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 40px rgba(102, 126, 234, 0.5);
+}
+
+.generate-btn:active:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.generate-btn:disabled {
+    background: #ccc;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+.generate-btn .btn-text {
+    position: relative;
+    z-index: 1;
+}
+
+/* 加载动画 */
+.loading-indicator {
+    padding: 40px;
+    background: #f8f9fa;
+    border-radius: 15px;
+    margin-top: 20px;
+}
+
+.spinner-grow {
+    width: 1.5rem;
+    height: 1.5rem;
+    margin: 0 5px;
+}
+
+/* 音频播放器样式 */
+.audio-player {
+    margin-top: 25px;
+}
+
+.audio-player audio {
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* 历史记录样式 */
+.history-section .card-header {
+    border-bottom: 2px solid #e0e0e0;
+    padding: 15px 20px;
+}
+
+.history-item {
+    padding: 15px;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.2s;
+}
+
+.history-item:hover {
+    background: #f8f9fa;
+}
+
+.history-item:last-child {
+    border-bottom: none;
+}
+
+.history-item .filename {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.history-item .timestamp {
+    font-size: 0.85rem;
+    color: #999;
+}
+
+/* Toast 通知样式 */
+.toast {
+    min-width: 300px;
+}
+
+.toast-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.toast-header .btn-close {
+    filter: brightness(0) invert(1);
+}
+
+/* 页脚样式 */
+.footer {
+    color: white;
+    opacity: 0.8;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .title {
+        font-size: 2rem;
+    }
+
+    .subtitle {
+        font-size: 1rem;
+    }
+
+    .emotion-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .generate-btn {
+        padding: 12px 40px;
+        font-size: 1.1rem;
+    }
+
+    .emotion-btn .emoji {
+        font-size: 2rem;
+    }
+
+    .emotion-btn .name {
+        font-size: 1rem;
+    }
+
+    .emotion-btn .desc {
+        font-size: 0.75rem;
+    }
+}
+
+/* 动画效果 */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.main-card {
+    animation: fadeIn 0.6s ease-out;
+}
+
+.history-section {
+    animation: fadeIn 0.8s ease-out;
+}
