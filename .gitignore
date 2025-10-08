@@ -60,3 +60,5 @@ runtime/
 # Environment variables
 .env
 .env.local
+
+outputs

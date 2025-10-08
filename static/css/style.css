@@ -18,6 +18,27 @@ body {
     color: white;
 }
 
+/* 头像样式 */
+.avatar-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 5px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.avatar:hover {
+    transform: scale(1.1) rotate(5deg);
+}
+
 .title {
     font-size: 3rem;
     font-weight: 700;
@@ -238,11 +259,48 @@ body {
 /* 页脚样式 */
 .footer {
     color: white;
-    opacity: 0.8;
+}
+
+.streamer-info {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 20px;
+    margin: 0 auto;
+    max-width: 400px;
+}
+
+.streamer-info p {
+    margin: 0;
+    color: white;
+}
+
+.douyin-link {
+    display: inline-block;
+    color: white;
+    text-decoration: none;
+    background: linear-gradient(135deg, #ff0050 0%, #00f2ea 100%);
+    padding: 8px 20px;
+    border-radius: 25px;
+    font-weight: 600;
+    transition: all 0.3s;
+    box-shadow: 0 4px 15px rgba(255, 0, 80, 0.3);
+}
+
+.douyin-link:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(255, 0, 80, 0.5);
+    color: white;
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
+    .avatar {
+        width: 90px;
+        height: 90px;
+        border: 3px solid rgba(255, 255, 255, 0.9);
+    }
+
     .title {
         font-size: 2rem;
     }

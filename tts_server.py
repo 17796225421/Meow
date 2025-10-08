@@ -3,7 +3,7 @@ TTS Web 服务器 - FastAPI 后端
 极简用户界面，用户只需输入文本和选择情感
 """
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,10 +12,11 @@ import requests
 import os
 import json
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Dict
 import subprocess
 import time
 import sys
+import uuid
 
 # 导入情感配置
 from emotion_config import EMOTION_CONFIGS, MODEL_CONFIG, DEFAULT_PARAMS, GPT_SOVITS_DIR
@@ -42,6 +43,9 @@ app.mount('/outputs', StaticFiles(directory=outputs_dir), name='outputs')
 # GPT-SoVITS API 配置
 GPT_SOVITS_API_URL = "http://127.0.0.1:9880"
 gpt_sovits_process = None
+
+# 用户历史记录存储 {session_id: [filename1, filename2, ...]}
+user_history: Dict[str, list] = {}
 
 # 数据模型
 class GenerateRequest(BaseModel):
@@ -177,9 +181,20 @@ async def shutdown_event():
         gpt_sovits_process.wait()
         print("✅ 服务已关闭")
 
+def get_or_create_session(request: Request, response: Response) -> str:
+    """获取或创建会话ID"""
+    session_id = request.cookies.get("session_id")
+    if not session_id:
+        session_id = str(uuid.uuid4())
+        response.set_cookie(key="session_id", value=session_id, max_age=86400*30)  # 30天
+    return session_id
+
 @app.get("/", response_class=HTMLResponse)
-async def root():
+async def root(request: Request, response: Response):
     """主页面"""
+    # 确保用户有会话ID
+    get_or_create_session(request, response)
+
     index_path = os.path.join(static_dir, 'index.html')
     if os.path.exists(index_path):
         with open(index_path, 'r', encoding='utf-8') as f:
@@ -205,8 +220,11 @@ async def get_emotions():
     }
 
 @app.post("/api/generate")
-async def generate_speech(request: GenerateRequest):
+async def generate_speech(request: GenerateRequest, req: Request, response: Response):
     """生成语音"""
+    # 获取会话ID
+    session_id = get_or_create_session(req, response)
+
     try:
         # 验证情感类型
         if request.emotion not in EMOTION_CONFIGS:
@@ -259,6 +277,13 @@ async def generate_speech(request: GenerateRequest):
 
         print(f"✅ 语音生成成功: {filename}")
 
+        # 将文件名添加到用户历史记录
+        if session_id not in user_history:
+            user_history[session_id] = []
+        user_history[session_id].insert(0, filename)  # 插入到开头
+        # 只保留最近10条
+        user_history[session_id] = user_history[session_id][:10]
+
         return {
             "success": True,
             "data": {
@@ -278,25 +303,28 @@ async def generate_speech(request: GenerateRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/history")
-async def get_history():
-    """获取历史生成记录"""
+async def get_history(request: Request, response: Response):
+    """获取当前用户的历史生成记录"""
+    # 获取会话ID
+    session_id = get_or_create_session(request, response)
+
     try:
         files = []
-        if os.path.exists(outputs_dir):
-            for filename in os.listdir(outputs_dir):
-                if filename.endswith('.wav'):
-                    filepath = os.path.join(outputs_dir, filename)
-                    stat = os.stat(filepath)
-                    files.append({
-                        "filename": filename,
-                        "url": f"/outputs/{filename}",
-                        "size": stat.st_size,
-                        "created_at": datetime.fromtimestamp(stat.st_ctime).isoformat()
-                    })
 
-        # 按时间倒序排序，最多返回 10 条
-        files.sort(key=lambda x: x["created_at"], reverse=True)
-        files = files[:10]
+        # 获取该用户的历史记录
+        user_files = user_history.get(session_id, [])
+
+        for filename in user_files:
+            filepath = os.path.join(outputs_dir, filename)
+            # 检查文件是否还存在
+            if os.path.exists(filepath):
+                stat = os.stat(filepath)
+                files.append({
+                    "filename": filename,
+                    "url": f"/outputs/{filename}",
+                    "size": stat.st_size,
+                    "created_at": datetime.fromtimestamp(stat.st_ctime).isoformat()
+                })
 
         return {
             "success": True,
