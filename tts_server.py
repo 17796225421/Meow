@@ -117,41 +117,54 @@ async def startup_event():
             "-p", "9880"
         ]
 
+        # 不使用 CREATE_NO_WINDOW，让输出显示
         gpt_sovits_process = subprocess.Popen(
             cmd,
             cwd=GPT_SOVITS_DIR,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0,
             text=True,
             encoding='utf-8',
             errors='ignore'
         )
 
         print("⏳ 等待 API 服务启动（约15秒）...")
+        print(f"   提示：如果启动失败，请查看上方的错误信息")
 
         # 等待并检查 API 是否启动
         max_attempts = 15
+        api_ready = False
         for i in range(max_attempts):
             time.sleep(1)
             try:
-                response = requests.get(f"{GPT_SOVITS_API_URL}/", timeout=2)
-                if response.status_code in [200, 400]:  # 400 也表示API在运行
+                # 使用 POST 请求测试，传入测试参数
+                test_params = {
+                    "text": "测试",
+                    "text_language": "zh"
+                }
+                response = requests.post(f"{GPT_SOVITS_API_URL}/", json=test_params, timeout=2)
+                # 只要能连接上就算成功（即使返回错误也说明API在运行）
+                if response.status_code in [200, 400, 500]:
                     print("✅ GPT-SoVITS API 服务启动成功!")
+                    api_ready = True
                     break
-            except:
+            except requests.exceptions.ConnectionError:
                 if i < max_attempts - 1:
                     print(f"   等待中... ({i+1}/{max_attempts})")
-                else:
-                    print("⚠️  API 启动超时，但服务器将继续运行")
-                    print("   请检查 GPT-SoVITS 配置是否正确")
+            except Exception as e:
+                # 其他错误也可能说明API已经启动
+                print("✅ GPT-SoVITS API 服务启动成功!")
+                api_ready = True
+                break
+
+        if not api_ready:
+            print("⚠️  API 启动超时，但服务器将继续运行")
+            print("   如果生成失败，请手动检查 GPT-SoVITS 配置")
 
     except Exception as e:
         print(f"❌ 启动 GPT-SoVITS API 失败: {e}")
 
     print("\n" + "="*60)
     print("🎉 服务器启动完成!")
-    print("📝 本地访问: http://localhost:8000")
+    print("📝 本地访问: http://localhost:3000")
     print("="*60 + "\n")
 
 @app.on_event("shutdown")
@@ -317,4 +330,4 @@ if __name__ == "__main__":
     # 确保输出目录存在
     os.makedirs(outputs_dir, exist_ok=True)
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=3000)
