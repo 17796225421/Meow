@@ -13,6 +13,7 @@ from infer.lib.train import utils
 
 hps = utils.get_hparams()
 os.environ["CUDA_VISIBLE_DEVICES"] = hps.gpus.replace("-", ",")
+os.environ["USE_LIBUV"] = "0"
 n_gpus = len(hps.gpus.split("-"))
 from random import randint, shuffle
 
@@ -129,6 +130,7 @@ def run(
         writer = SummaryWriter(log_dir=hps.model_dir)
         writer_eval = SummaryWriter(log_dir=os.path.join(hps.model_dir, "eval"))
 
+    # 使用gloo后端（PyTorch 2.7.1已修复Windows单GPU问题）
     dist.init_process_group(
         backend="gloo", init_method="env://", world_size=n_gpus, rank=rank
     )
