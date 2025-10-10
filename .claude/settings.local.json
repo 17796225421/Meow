@@ -1,8 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(powershell -Command \"Get-ChildItem -Path ''DouyinLiveRecorder_v4.0.6\\downloads'' -Recurse -Directory | Select-Object FullName -First 10\")",
-      "Bash(powershell -Command \"Get-ChildItem -Path ''DouyinLiveRecorder_v4.0.6\\downloads'' -Recurse -File -Include ''*.mp4'',''*.flv'' | Select-Object FullName, Length, LastWriteTime -First 5\")"
+      "WebSearch"
     ],
     "deny": [],
     "ask": []
