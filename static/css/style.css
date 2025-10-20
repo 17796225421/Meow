@@ -623,21 +623,11 @@ body {
     }
 }
 
-/* 不同模型的边框颜色 */
-.model-response-card[data-model="opus"] {
-    border-left: 5px solid #764ba2;
-}
-
-.model-response-card[data-model="sonnet"] {
-    border-left: 5px solid #667eea;
-}
-
-.model-response-card[data-model="deepseek"] {
-    border-left: 5px solid #10b981;
-}
-
-.model-response-card[data-model="gpt5"] {
-    border-left: 5px solid #f59e0b;
+/* 模型边框颜色（由 JS 动态设置内联样式） */
+.model-response-card {
+    border-left-width: 5px;
+    border-left-style: solid;
+    /* 具体颜色由 JS 根据配置文件动态设置 */
 }
 
 /* 卡片头部 - 简化版 */

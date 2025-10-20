@@ -7,13 +7,32 @@ from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 import httpx
 import logging
+import json
+import os
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-# OpenAI API配置
-OPENAI_API_URL = "http://localhost:3001/v1/chat/completions"
-OPENAI_API_KEY = "sk-UUx7BHKXOjkqKfJyd4BVk9jI04GWi7WlCiZeAWlhCvl8397d"
+# 配置文件路径
+CONFIG_FILE = os.path.join(os.path.dirname(__file__), 'friends_models_config.json')
+
+# 读取模型配置（支持热加载）
+def load_models_config():
+    """从JSON文件读取模型配置"""
+    try:
+        with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+        logger.info(f"✅ 成功加载模型配置，共{len(config.get('models', []))}个模型")
+        return config
+    except FileNotFoundError:
+        logger.error(f"❌ 配置文件不存在: {CONFIG_FILE}")
+        return {"api": {}, "models": []}
+    except json.JSONDecodeError as e:
+        logger.error(f"❌ 配置文件JSON格式错误: {e}")
+        return {"api": {}, "models": []}
+    except Exception as e:
+        logger.error(f"❌ 读取配置文件失败: {e}")
+        return {"api": {}, "models": []}
 
 # 请求模型
 class Message(BaseModel):
@@ -32,12 +51,36 @@ class ChatResponse(BaseModel):
     data: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
 
+@router.get("/api/friends/models")
+async def get_models_config():
+    """获取模型配置（支持热加载）"""
+    try:
+        config = load_models_config()
+        return {
+            "success": True,
+            "data": {
+                "models": config.get("models", [])
+            }
+        }
+    except Exception as e:
+        logger.error(f"获取模型配置失败: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
 @router.post("/api/friends/chat")
 async def friends_chat(request: ChatRequest):
     """
     转发聊天请求到OpenAI兼容的API（异步并发）
     """
     try:
+        # 读取配置（支持热加载）
+        config = load_models_config()
+        api_config = config.get("api", {})
+        api_url = api_config.get("endpoint", "http://localhost:3001/v1/chat/completions")
+        api_key = api_config.get("apiKey", "")
+
         # 准备请求数据
         payload = {
             "model": request.model,
@@ -49,15 +92,15 @@ async def friends_chat(request: ChatRequest):
         # 准备请求头
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {OPENAI_API_KEY}"
+            "Authorization": f"Bearer {api_key}"
         }
 
         # 转发请求（使用异步HTTP客户端）
-        logger.info(f"转发请求到AI API: 模型={request.model}")
+        logger.info(f"转发请求到AI API: 模型={request.model}, URL={api_url}")
 
         async with httpx.AsyncClient(timeout=60.0) as client:
             response = await client.post(
-                OPENAI_API_URL,
+                api_url,
                 json=payload,
                 headers=headers
             )

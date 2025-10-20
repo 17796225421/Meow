@@ -232,30 +232,11 @@
                             </div>
                         </div>
 
-                        <!-- 模型状态指示器 - 紧凑横向布局 -->
+                        <!-- 模型状态指示器 - 动态生成 -->
                         <div class="models-status-bar mb-4">
                             <div class="status-bar-label">模型状态:</div>
                             <div class="status-indicators">
-                                <div class="status-indicator" data-model="opus" data-status="idle">
-                                    <span class="indicator-icon">🎨</span>
-                                    <span class="indicator-name">Opus</span>
-                                    <span class="indicator-badge">待发送</span>
-                                </div>
-                                <div class="status-indicator" data-model="sonnet" data-status="idle">
-                                    <span class="indicator-icon">⚡</span>
-                                    <span class="indicator-name">Sonnet</span>
-                                    <span class="indicator-badge">待发送</span>
-                                </div>
-                                <div class="status-indicator" data-model="deepseek" data-status="idle">
-                                    <span class="indicator-icon">🤖</span>
-                                    <span class="indicator-name">DeepSeek</span>
-                                    <span class="indicator-badge">待发送</span>
-                                </div>
-                                <div class="status-indicator" data-model="gpt5" data-status="idle">
-                                    <span class="indicator-icon">🚀</span>
-                                    <span class="indicator-name">GPT-5</span>
-                                    <span class="indicator-badge">待发送</span>
-                                </div>
+                                <!-- 状态指示器由 JS 动态生成 -->
                             </div>
                         </div>
 

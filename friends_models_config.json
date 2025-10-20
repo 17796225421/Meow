@@ -1,0 +1,36 @@
+{
+  "api": {
+    "endpoint": "http://localhost:3001/v1/chat/completions",
+    "apiKey": "sk-UUx7BHKXOjkqKfJyd4BVk9jI04GWi7WlCiZeAWlhCvl8397d"
+  },
+  "models": [
+    {
+      "id": "opus",
+      "name": "Claude Opus",
+      "model": "claude-opus-4-1",
+      "icon": "🎨",
+      "color": "#764ba2"
+    },
+    {
+      "id": "sonnet",
+      "name": "Claude Sonnet",
+      "model": "claude-sonnet-4-5",
+      "icon": "⚡",
+      "color": "#667eea"
+    },
+    {
+      "id": "deepseek",
+      "name": "DeepSeek",
+      "model": "deepseek-chat-3-1",
+      "icon": "🤖",
+      "color": "#10b981"
+    },
+    {
+      "id": "gpt5",
+      "name": "GPT-5",
+      "model": "gpt-5",
+      "icon": "🚀",
+      "color": "#f59e0b"
+    }
+  ]
+}

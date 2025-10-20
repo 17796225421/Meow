@@ -501,51 +501,83 @@ function verifyPassword() {
 }
 
 // 显示好朋友内容
-function showFriendsContent() {
+async function showFriendsContent() {
     document.getElementById('passwordPrompt').style.display = 'none';
     document.getElementById('friendsContent').style.display = 'block';
 
     // 初始化字符计数
     initFriendsCharCount();
 
-    // 恢复聊天状态（如果有）
-    loadChatState();
+    // 先加载模型配置（支持热加载）
+    const loaded = await loadModelsConfig();
+
+    if (loaded) {
+        // 恢复聊天状态（如果有）
+        loadChatState();
+    }
 }
 
 // ========== 好朋友多模型聊天功能 ==========
 
-// 模型配置
-const AI_MODELS = [
-    {
-        id: 'opus',
-        name: 'Claude Opus',
-        model: 'claude-opus-4-1',
-        icon: '🎨'
-    },
-    {
-        id: 'sonnet',
-        name: 'Claude Sonnet',
-        model: 'claude-sonnet-4-5',
-        icon: '⚡'
-    },
-    {
-        id: 'deepseek',
-        name: 'DeepSeek',
-        model: 'deepseek-chat-3-1',
-        icon: '🤖'
-    },
-    {
-        id: 'gpt5',
-        name: 'GPT-5',
-        model: 'gpt-5',
-        icon: '🚀'
-    }
-];
+// 模型配置（从服务器动态加载）
+let AI_MODELS = [];
 
 // API配置 - 使用后端转发
 const API_CONFIG = {
-    endpoint: '/api/friends/chat'  // 通过后端转发，解决手机访问问题
+    endpoint: '/api/friends/chat',  // 通过后端转发，解决手机访问问题
+    modelsEndpoint: '/api/friends/models'  // 获取模型配置
 };
+
+// 加载模型配置（支持热加载）
+async function loadModelsConfig() {
+    try {
+        const response = await fetch(API_CONFIG.modelsEndpoint);
+        const result = await response.json();
+
+        if (result.success && result.data && result.data.models) {
+            AI_MODELS = result.data.models;
+            console.log(`✅ 成功加载${AI_MODELS.length}个模型配置`);
+
+            // 动态生成状态指示器
+            renderStatusIndicators();
+
+            return true;
+        } else {
+            console.error('❌ 加载模型配置失败:', result.error);
+            showToast('加载模型配置失败', 'danger');
+            return false;
+        }
+    } catch (error) {
+        console.error('❌ 获取模型配置失败:', error);
+        showToast('无法连接到服务器', 'danger');
+        return false;
+    }
+}
+
+// 动态生成状态指示器
+function renderStatusIndicators() {
+    const container = document.querySelector('.status-indicators');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    AI_MODELS.forEach(model => {
+        const indicator = document.createElement('div');
+        indicator.className = 'status-indicator';
+        indicator.setAttribute('data-model', model.id);
+        indicator.setAttribute('data-status', 'idle');
+
+        indicator.innerHTML = `
+            <span class="indicator-icon">${model.icon}</span>
+            <span class="indicator-name">${model.name}</span>
+            <span class="indicator-badge">待发送</span>
+        `;
+
+        container.appendChild(indicator);
+    });
+
+    console.log('✅ 状态指示器已生成');
+}
 
 // 初始化字符计数
 function initFriendsCharCount() {
@@ -721,6 +753,11 @@ function createResponseCard(modelId, content, duration, isError = false) {
     const card = document.createElement('div');
     card.className = 'model-response-card';
     card.setAttribute('data-model', modelId);
+
+    // 动态应用模型颜色（从配置文件）
+    if (modelInfo.color) {
+        card.style.borderLeftColor = modelInfo.color;
+    }
 
     // 创建卡片内容
     const timeText = duration ? `${duration}秒` : '';
