@@ -579,6 +579,24 @@ async function sendToAllModels() {
         return;
     }
 
+    // 发送新问题前，保存上一轮对话到历史
+    saveToHistory();
+
+    // 显示当前问题
+    const questionDisplay = document.getElementById('currentQuestionDisplay');
+    const questionText = document.getElementById('currentQuestionText');
+    questionText.textContent = message;
+    questionDisplay.style.display = 'block';
+
+    // 清空响应容器，准备新的响应
+    const container = document.getElementById('modelsResponseContainer');
+    container.innerHTML = '';
+
+    // 重置所有状态指示器
+    AI_MODELS.forEach(model => {
+        updateModelStatus(model.id, 'idle', '待发送');
+    });
+
     // 禁用发送按钮
     const sendBtn = document.getElementById('sendFriendsBtn');
     sendBtn.disabled = true;
@@ -737,5 +755,91 @@ function clearAllResponses() {
         `;
     }
 
+    // 隐藏当前问题显示
+    const questionDisplay = document.getElementById('currentQuestionDisplay');
+    if (questionDisplay) {
+        questionDisplay.style.display = 'none';
+    }
+
     showToast('已清空所有内容', 'info');
+}
+
+// ========== 历史对话管理 ==========
+
+// 保存当前对话到历史
+function saveToHistory() {
+    // 获取当前问题
+    const questionText = document.getElementById('currentQuestionText');
+    if (!questionText || !questionText.textContent.trim()) {
+        return; // 没有当前问题，不保存
+    }
+
+    const question = questionText.textContent.trim();
+
+    // 获取所有响应卡片
+    const container = document.getElementById('modelsResponseContainer');
+    const responseCards = container.querySelectorAll('.model-response-card');
+
+    if (responseCards.length === 0) {
+        return; // 没有响应，不保存
+    }
+
+    // 克隆所有响应卡片
+    const clonedCards = Array.from(responseCards).map(card => card.cloneNode(true));
+
+    // 创建历史记录项
+    const historyContainer = document.getElementById('historyContainer');
+    const chatHistory = document.getElementById('chatHistory');
+
+    // 显示历史区域
+    chatHistory.style.display = 'block';
+
+    // 创建历史项元素
+    const historyItem = document.createElement('div');
+    historyItem.className = 'history-item';
+
+    const timestamp = new Date().toLocaleString('zh-CN', {
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+
+    const historyId = `history-${Date.now()}`;
+
+    historyItem.innerHTML = `
+        <div class="history-question" onclick="toggleHistoryItem('${historyId}')">
+            <div class="history-question-label">
+                <span class="toggle-icon">▶</span>历史问题
+            </div>
+            <div class="history-question-text">${question}</div>
+            <div class="history-question-meta">${timestamp} · ${clonedCards.length}个回答</div>
+        </div>
+        <div id="${historyId}" class="history-responses">
+            <!-- 响应卡片将被插入这里 -->
+        </div>
+    `;
+
+    // 插入到历史容器顶部（最新的在上面）
+    historyContainer.insertBefore(historyItem, historyContainer.firstChild);
+
+    // 将克隆的卡片插入到历史响应区
+    const responsesContainer = historyItem.querySelector(`#${historyId}`);
+    clonedCards.forEach(card => {
+        responsesContainer.appendChild(card);
+    });
+}
+
+// 切换历史项展开/折叠
+function toggleHistoryItem(historyId) {
+    const responsesEl = document.getElementById(historyId);
+    const toggleIcon = responsesEl.previousElementSibling.querySelector('.toggle-icon');
+
+    if (responsesEl.classList.contains('expanded')) {
+        responsesEl.classList.remove('expanded');
+        toggleIcon.classList.remove('expanded');
+    } else {
+        responsesEl.classList.add('expanded');
+        toggleIcon.classList.add('expanded');
+    }
 }

@@ -259,6 +259,14 @@
                             </div>
                         </div>
 
+                        <!-- 当前问题显示 -->
+                        <div id="currentQuestionDisplay" class="current-question-display mb-3" style="display: none;">
+                            <div class="question-label">
+                                <i class="bi bi-chat-quote"></i> 当前问题:
+                            </div>
+                            <div id="currentQuestionText" class="question-text"></div>
+                        </div>
+
                         <!-- 响应结果标题 -->
                         <div class="responses-header mb-3">
                             <h6 class="mb-0">
@@ -272,6 +280,18 @@
                             <div class="no-responses-yet">
                                 <i class="bi bi-inbox" style="font-size: 2rem; opacity: 0.3;"></i>
                                 <p class="text-muted mt-2 mb-0">暂无响应结果</p>
+                            </div>
+                        </div>
+
+                        <!-- 历史对话区域 -->
+                        <div id="chatHistory" class="chat-history mt-5" style="display: none;">
+                            <div class="history-header">
+                                <h6 class="mb-3">
+                                    <i class="bi bi-clock-history"></i> 历史对话
+                                </h6>
+                            </div>
+                            <div id="historyContainer" class="history-container">
+                                <!-- 历史记录动态插入 -->
                             </div>
                         </div>
                     </div>

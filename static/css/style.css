@@ -785,3 +785,190 @@ body {
         font-size: 0.95rem;
     }
 }
+
+/* ========== 当前问题和历史对话样式 ========== */
+
+/* 当前问题显示 */
+.current-question-display {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 15px 20px;
+    border-radius: 12px;
+    color: white;
+    animation: fadeIn 0.4s ease-out;
+}
+
+.question-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    opacity: 0.9;
+}
+
+.question-text {
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+/* 历史对话区域 */
+.chat-history {
+    border-top: 3px solid #e0e0e0;
+    padding-top: 30px;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.history-header h6 {
+    color: #666;
+    font-weight: 600;
+}
+
+.history-container {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+/* 历史记录项 */
+.history-item {
+    background: #f8f9fa;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.3s;
+}
+
+.history-item:hover {
+    border-color: #667eea;
+    box-shadow: 0 3px 15px rgba(102, 126, 234, 0.1);
+}
+
+/* 历史问题 */
+.history-question {
+    background: white;
+    padding: 12px 15px;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+    margin-bottom: 15px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.history-question:hover {
+    background: #f8f9fa;
+}
+
+.history-question-label {
+    font-size: 0.75rem;
+    color: #999;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+}
+
+.history-question-text {
+    font-size: 0.95rem;
+    color: #333;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.history-question-meta {
+    font-size: 0.75rem;
+    color: #999;
+    margin-top: 5px;
+}
+
+/* 历史响应卡片容器 */
+.history-responses {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-left: 15px;
+    border-left: 2px solid #e0e0e0;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+.history-responses.expanded {
+    max-height: 2000px;
+}
+
+/* 历史响应卡片（缩小版） */
+.history-responses .model-response-card {
+    padding: 12px;
+    font-size: 0.9rem;
+}
+
+.history-responses .model-header {
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+}
+
+.history-responses .model-icon {
+    font-size: 1.2rem;
+}
+
+.history-responses .model-name {
+    font-size: 0.95rem;
+}
+
+.history-responses .model-time {
+    font-size: 0.75rem;
+}
+
+.history-responses .model-response-content {
+    font-size: 0.85rem;
+    max-height: 200px;
+    min-height: 40px;
+}
+
+/* 折叠/展开图标 */
+.toggle-icon {
+    display: inline-block;
+    transition: transform 0.3s;
+    margin-right: 5px;
+}
+
+.toggle-icon.expanded {
+    transform: rotate(90deg);
+}
+
+/* 历史对话响应式 */
+@media (max-width: 768px) {
+    .current-question-display {
+        padding: 12px 15px;
+    }
+
+    .question-label {
+        font-size: 0.8rem;
+    }
+
+    .question-text {
+        font-size: 0.9rem;
+    }
+
+    .chat-history {
+        padding-top: 20px;
+    }
+
+    .history-item {
+        padding: 15px;
+    }
+
+    .history-question {
+        padding: 10px 12px;
+    }
+
+    .history-question-text {
+        font-size: 0.85rem;
+    }
+
+    .history-responses {
+        padding-left: 10px;
+    }
+
+    .history-responses .model-response-card {
+        padding: 10px;
+    }
+}
