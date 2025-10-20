@@ -504,4 +504,210 @@ function verifyPassword() {
 function showFriendsContent() {
     document.getElementById('passwordPrompt').style.display = 'none';
     document.getElementById('friendsContent').style.display = 'block';
+
+    // 初始化字符计数
+    initFriendsCharCount();
+}
+
+// ========== 好朋友多模型聊天功能 ==========
+
+// 模型配置
+const AI_MODELS = [
+    {
+        id: 'opus',
+        name: 'Claude Opus',
+        model: 'claude-opus-4-1',
+        icon: '🎨'
+    },
+    {
+        id: 'sonnet',
+        name: 'Claude Sonnet',
+        model: 'claude-sonnet-4-5',
+        icon: '⚡'
+    },
+    {
+        id: 'deepseek',
+        name: 'DeepSeek',
+        model: 'deepseek-chat-3-1',
+        icon: '🤖'
+    },
+    {
+        id: 'gpt5',
+        name: 'GPT-5',
+        model: 'gpt-5',
+        icon: '🚀'
+    }
+];
+
+// API配置
+const API_CONFIG = {
+    endpoint: 'http://localhost:3001/v1/chat/completions',
+    apiKey: 'sk-UUx7BHKXOjkqKfJyd4BVk9jI04GWi7WlCiZeAWlhCvl8397d'
+};
+
+// 初始化字符计数
+function initFriendsCharCount() {
+    const input = document.getElementById('friendsInput');
+    const charCount = document.getElementById('friendsCharCount');
+
+    if (input && charCount) {
+        input.addEventListener('input', function() {
+            const count = input.value.length;
+            charCount.textContent = count;
+
+            // 超过限制时变红
+            if (count > 2000) {
+                charCount.style.color = '#dc3545';
+            } else {
+                charCount.style.color = '#667eea';
+            }
+        });
+    }
+}
+
+// 发送消息给所有模型
+async function sendToAllModels() {
+    const input = document.getElementById('friendsInput');
+    const message = input.value.trim();
+
+    if (!message) {
+        showToast('请输入消息', 'warning');
+        return;
+    }
+
+    if (message.length > 2000) {
+        showToast('消息长度超过限制', 'warning');
+        return;
+    }
+
+    // 禁用发送按钮
+    const sendBtn = document.getElementById('sendFriendsBtn');
+    sendBtn.disabled = true;
+
+    // 并行调用所有模型
+    const promises = AI_MODELS.map(model =>
+        callModelAPI(model.id, model.model, message)
+    );
+
+    // 等待所有请求完成
+    await Promise.allSettled(promises);
+
+    // 重新启用发送按钮
+    sendBtn.disabled = false;
+}
+
+// 调用单个模型的API
+async function callModelAPI(modelId, modelName, message) {
+    // 更新状态为加载中
+    updateModelStatus(modelId, 'loading', '正在思考...');
+    updateModelResponse(modelId, '');
+
+    try {
+        const response = await fetch(API_CONFIG.endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${API_CONFIG.apiKey}`
+            },
+            body: JSON.stringify({
+                model: modelName,
+                messages: [
+                    {
+                        role: 'user',
+                        content: message
+                    }
+                ],
+                temperature: 0.7,
+                max_tokens: 2000
+            }),
+            timeout: 60000 // 60秒超时
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        // 提取响应内容
+        let content = '';
+        if (data.choices && data.choices.length > 0) {
+            content = data.choices[0].message.content;
+        } else {
+            throw new Error('响应格式错误');
+        }
+
+        // 更新状态为成功
+        updateModelStatus(modelId, 'success', '回复完成');
+        updateModelResponse(modelId, content);
+
+    } catch (error) {
+        console.error(`${modelName} 错误:`, error);
+
+        // 更新状态为错误
+        updateModelStatus(modelId, 'error', '请求失败');
+        updateModelResponse(modelId, `❌ 错误: ${error.message}`, true);
+    }
+}
+
+// 更新模型状态
+function updateModelStatus(modelId, status, text) {
+    const card = document.querySelector(`.model-response-card[data-model="${modelId}"]`);
+    if (!card) return;
+
+    const statusEl = card.querySelector('.model-status');
+    const statusText = card.querySelector('.status-text');
+
+    if (statusEl) {
+        statusEl.setAttribute('data-status', status);
+    }
+
+    if (statusText) {
+        statusText.textContent = text;
+    }
+}
+
+// 更新模型响应内容
+function updateModelResponse(modelId, content, isError = false) {
+    const card = document.querySelector(`.model-response-card[data-model="${modelId}"]`);
+    if (!card) return;
+
+    const contentEl = card.querySelector('.model-response-content');
+    if (!contentEl) return;
+
+    if (!content) {
+        contentEl.innerHTML = '<div class="empty-state">正在生成响应...</div>';
+    } else if (isError) {
+        contentEl.innerHTML = `<div class="error-state">${content}</div>`;
+    } else {
+        // 显示正常内容
+        contentEl.textContent = content;
+
+        // 自动滚动到顶部
+        contentEl.scrollTop = 0;
+    }
+}
+
+// 清空所有响应
+function clearAllResponses() {
+    // 清空输入框
+    const input = document.getElementById('friendsInput');
+    if (input) {
+        input.value = '';
+        document.getElementById('friendsCharCount').textContent = '0';
+    }
+
+    // 重置所有模型卡片
+    AI_MODELS.forEach(model => {
+        updateModelStatus(model.id, 'idle', '待发送');
+        const card = document.querySelector(`.model-response-card[data-model="${model.id}"]`);
+        if (card) {
+            const contentEl = card.querySelector('.model-response-content');
+            if (contentEl) {
+                contentEl.innerHTML = '<div class="empty-state">等待发送消息...</div>';
+            }
+        }
+    });
+
+    showToast('已清空所有内容', 'info');
 }

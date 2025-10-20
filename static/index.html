@@ -200,14 +200,102 @@
                     </div>
 
                     <!-- 内容区域（验证后显示） -->
-                    <div id="friendsContent" class="card-body p-5" style="display: none;">
-                        <div class="text-center">
-                            <h3 class="mb-4">
+                    <div id="friendsContent" class="card-body p-4" style="display: none;">
+                        <div class="text-center mb-4">
+                            <h3 class="mb-2">
                                 <i class="bi bi-star-fill text-warning"></i> 好朋友专区
                             </h3>
-                            <div class="alert alert-info">
-                                <i class="bi bi-heart-fill text-danger"></i>
-                                <p class="mb-0">欢迎来到好朋友专区！内容即将上线...</p>
+                            <p class="text-muted small mb-0">与多个AI模型同时对话</p>
+                        </div>
+
+                        <!-- 聊天输入区 -->
+                        <div class="chat-input-area mb-4">
+                            <textarea
+                                id="friendsInput"
+                                class="form-control form-control-lg mb-3"
+                                rows="4"
+                                placeholder="输入您的问题，将同时发送给所有AI模型..."
+                                maxlength="2000"
+                            ></textarea>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted small">
+                                    <span id="friendsCharCount">0</span> / 2000 字
+                                </span>
+                                <div>
+                                    <button id="clearFriendsBtn" class="btn btn-outline-secondary me-2" onclick="clearAllResponses()">
+                                        <i class="bi bi-trash"></i> 清空
+                                    </button>
+                                    <button id="sendFriendsBtn" class="btn btn-primary" onclick="sendToAllModels()">
+                                        <i class="bi bi-send-fill"></i> 发送
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 模型响应区域 - 垂直列表 -->
+                        <div id="modelsResponseContainer">
+                            <!-- Claude Opus -->
+                            <div class="model-response-card" data-model="opus">
+                                <div class="model-header">
+                                    <div class="model-info">
+                                        <span class="model-icon">🎨</span>
+                                        <span class="model-name">Claude Opus</span>
+                                    </div>
+                                    <div class="model-status" data-status="idle">
+                                        <span class="status-text">待发送</span>
+                                    </div>
+                                </div>
+                                <div class="model-response-content">
+                                    <div class="empty-state">等待发送消息...</div>
+                                </div>
+                            </div>
+
+                            <!-- Claude Sonnet -->
+                            <div class="model-response-card" data-model="sonnet">
+                                <div class="model-header">
+                                    <div class="model-info">
+                                        <span class="model-icon">⚡</span>
+                                        <span class="model-name">Claude Sonnet</span>
+                                    </div>
+                                    <div class="model-status" data-status="idle">
+                                        <span class="status-text">待发送</span>
+                                    </div>
+                                </div>
+                                <div class="model-response-content">
+                                    <div class="empty-state">等待发送消息...</div>
+                                </div>
+                            </div>
+
+                            <!-- DeepSeek -->
+                            <div class="model-response-card" data-model="deepseek">
+                                <div class="model-header">
+                                    <div class="model-info">
+                                        <span class="model-icon">🤖</span>
+                                        <span class="model-name">DeepSeek</span>
+                                    </div>
+                                    <div class="model-status" data-status="idle">
+                                        <span class="status-text">待发送</span>
+                                    </div>
+                                </div>
+                                <div class="model-response-content">
+                                    <div class="empty-state">等待发送消息...</div>
+                                </div>
+                            </div>
+
+                            <!-- GPT-5 -->
+                            <div class="model-response-card" data-model="gpt5">
+                                <div class="model-header">
+                                    <div class="model-info">
+                                        <span class="model-icon">🚀</span>
+                                        <span class="model-name">GPT-5</span>
+                                    </div>
+                                    <div class="model-status" data-status="idle">
+                                        <span class="status-text">待发送</span>
+                                    </div>
+                                </div>
+                                <div class="model-response-content">
+                                    <div class="empty-state">等待发送消息...</div>
+                                </div>
                             </div>
                         </div>
                     </div>
