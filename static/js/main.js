@@ -675,7 +675,7 @@ function updateModelStatus(modelId, status, text) {
     }
 }
 
-// 动态创建响应卡片（先完成的插入到顶部）
+// 动态创建响应卡片（先完成的在上，后完成的在下）
 function createResponseCard(modelId, content, duration, isError = false) {
     const container = document.getElementById('modelsResponseContainer');
     if (!container) return;
@@ -708,8 +708,8 @@ function createResponseCard(modelId, content, duration, isError = false) {
         </div>
     `;
 
-    // 插入到容器顶部（先完成先显示）
-    container.insertBefore(card, container.firstChild);
+    // 插入到容器底部（先完成的在上，后完成的在下）
+    container.appendChild(card);
 }
 
 // 清空所有响应
