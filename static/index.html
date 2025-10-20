@@ -232,70 +232,46 @@
                             </div>
                         </div>
 
-                        <!-- 模型响应区域 - 垂直列表 -->
+                        <!-- 模型状态指示器 - 紧凑横向布局 -->
+                        <div class="models-status-bar mb-4">
+                            <div class="status-bar-label">模型状态:</div>
+                            <div class="status-indicators">
+                                <div class="status-indicator" data-model="opus" data-status="idle">
+                                    <span class="indicator-icon">🎨</span>
+                                    <span class="indicator-name">Opus</span>
+                                    <span class="indicator-badge">待发送</span>
+                                </div>
+                                <div class="status-indicator" data-model="sonnet" data-status="idle">
+                                    <span class="indicator-icon">⚡</span>
+                                    <span class="indicator-name">Sonnet</span>
+                                    <span class="indicator-badge">待发送</span>
+                                </div>
+                                <div class="status-indicator" data-model="deepseek" data-status="idle">
+                                    <span class="indicator-icon">🤖</span>
+                                    <span class="indicator-name">DeepSeek</span>
+                                    <span class="indicator-badge">待发送</span>
+                                </div>
+                                <div class="status-indicator" data-model="gpt5" data-status="idle">
+                                    <span class="indicator-icon">🚀</span>
+                                    <span class="indicator-name">GPT-5</span>
+                                    <span class="indicator-badge">待发送</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 响应结果标题 -->
+                        <div class="responses-header mb-3">
+                            <h6 class="mb-0">
+                                <i class="bi bi-chat-dots"></i> 响应结果
+                                <span class="text-muted small">(先完成先显示)</span>
+                            </h6>
+                        </div>
+
+                        <!-- 模型响应卡片容器 - 动态插入 -->
                         <div id="modelsResponseContainer">
-                            <!-- Claude Opus -->
-                            <div class="model-response-card" data-model="opus">
-                                <div class="model-header">
-                                    <div class="model-info">
-                                        <span class="model-icon">🎨</span>
-                                        <span class="model-name">Claude Opus</span>
-                                    </div>
-                                    <div class="model-status" data-status="idle">
-                                        <span class="status-text">待发送</span>
-                                    </div>
-                                </div>
-                                <div class="model-response-content">
-                                    <div class="empty-state">等待发送消息...</div>
-                                </div>
-                            </div>
-
-                            <!-- Claude Sonnet -->
-                            <div class="model-response-card" data-model="sonnet">
-                                <div class="model-header">
-                                    <div class="model-info">
-                                        <span class="model-icon">⚡</span>
-                                        <span class="model-name">Claude Sonnet</span>
-                                    </div>
-                                    <div class="model-status" data-status="idle">
-                                        <span class="status-text">待发送</span>
-                                    </div>
-                                </div>
-                                <div class="model-response-content">
-                                    <div class="empty-state">等待发送消息...</div>
-                                </div>
-                            </div>
-
-                            <!-- DeepSeek -->
-                            <div class="model-response-card" data-model="deepseek">
-                                <div class="model-header">
-                                    <div class="model-info">
-                                        <span class="model-icon">🤖</span>
-                                        <span class="model-name">DeepSeek</span>
-                                    </div>
-                                    <div class="model-status" data-status="idle">
-                                        <span class="status-text">待发送</span>
-                                    </div>
-                                </div>
-                                <div class="model-response-content">
-                                    <div class="empty-state">等待发送消息...</div>
-                                </div>
-                            </div>
-
-                            <!-- GPT-5 -->
-                            <div class="model-response-card" data-model="gpt5">
-                                <div class="model-header">
-                                    <div class="model-info">
-                                        <span class="model-icon">🚀</span>
-                                        <span class="model-name">GPT-5</span>
-                                    </div>
-                                    <div class="model-status" data-status="idle">
-                                        <span class="status-text">待发送</span>
-                                    </div>
-                                </div>
-                                <div class="model-response-content">
-                                    <div class="empty-state">等待发送消息...</div>
-                                </div>
+                            <div class="no-responses-yet">
+                                <i class="bi bi-inbox" style="font-size: 2rem; opacity: 0.3;"></i>
+                                <p class="text-muted mt-2 mb-0">暂无响应结果</p>
                             </div>
                         </div>
                     </div>

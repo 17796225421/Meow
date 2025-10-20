@@ -597,9 +597,10 @@ async function sendToAllModels() {
 
 // 调用单个模型的API（通过后端转发）
 async function callModelAPI(modelId, modelName, message) {
+    const startTime = Date.now();
+
     // 更新状态为加载中
-    updateModelStatus(modelId, 'loading', '正在思考...');
-    updateModelResponse(modelId, '');
+    updateModelStatus(modelId, 'loading', '加载中');
 
     try {
         const response = await fetch(API_CONFIG.endpoint, {
@@ -639,55 +640,76 @@ async function callModelAPI(modelId, modelName, message) {
             throw new Error('响应格式错误');
         }
 
+        // 计算响应时间
+        const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+
         // 更新状态为成功
-        updateModelStatus(modelId, 'success', '回复完成');
-        updateModelResponse(modelId, content);
+        updateModelStatus(modelId, 'success', '完成');
+
+        // 动态创建并插入响应卡片
+        createResponseCard(modelId, content, duration);
 
     } catch (error) {
         console.error(`${modelName} 错误:`, error);
 
         // 更新状态为错误
-        updateModelStatus(modelId, 'error', '请求失败');
-        updateModelResponse(modelId, `❌ 错误: ${error.message}`, true);
+        updateModelStatus(modelId, 'error', '失败');
+
+        // 可选：也可以为错误创建卡片
+        // createResponseCard(modelId, `错误: ${error.message}`, null, true);
     }
 }
 
-// 更新模型状态
+// 更新状态栏中的模型状态
 function updateModelStatus(modelId, status, text) {
-    const card = document.querySelector(`.model-response-card[data-model="${modelId}"]`);
-    if (!card) return;
+    const indicator = document.querySelector(`.status-indicator[data-model="${modelId}"]`);
+    if (!indicator) return;
 
-    const statusEl = card.querySelector('.model-status');
-    const statusText = card.querySelector('.status-text');
+    // 更新状态属性
+    indicator.setAttribute('data-status', status);
 
-    if (statusEl) {
-        statusEl.setAttribute('data-status', status);
-    }
-
-    if (statusText) {
-        statusText.textContent = text;
+    // 更新状态文本
+    const badge = indicator.querySelector('.indicator-badge');
+    if (badge) {
+        badge.textContent = text;
     }
 }
 
-// 更新模型响应内容
-function updateModelResponse(modelId, content, isError = false) {
-    const card = document.querySelector(`.model-response-card[data-model="${modelId}"]`);
-    if (!card) return;
+// 动态创建响应卡片（先完成的插入到顶部）
+function createResponseCard(modelId, content, duration, isError = false) {
+    const container = document.getElementById('modelsResponseContainer');
+    if (!container) return;
 
-    const contentEl = card.querySelector('.model-response-content');
-    if (!contentEl) return;
-
-    if (!content) {
-        contentEl.innerHTML = '<div class="empty-state">正在生成响应...</div>';
-    } else if (isError) {
-        contentEl.innerHTML = `<div class="error-state">${content}</div>`;
-    } else {
-        // 显示正常内容
-        contentEl.textContent = content;
-
-        // 自动滚动到顶部
-        contentEl.scrollTop = 0;
+    // 移除"暂无响应"提示
+    const noResponsesEl = container.querySelector('.no-responses-yet');
+    if (noResponsesEl) {
+        noResponsesEl.remove();
     }
+
+    // 获取模型信息
+    const modelInfo = AI_MODELS.find(m => m.id === modelId);
+    if (!modelInfo) return;
+
+    // 创建卡片元素
+    const card = document.createElement('div');
+    card.className = 'model-response-card';
+    card.setAttribute('data-model', modelId);
+
+    // 创建卡片内容
+    const timeText = duration ? `${duration}秒` : '';
+    card.innerHTML = `
+        <div class="model-header">
+            <span class="model-icon">${modelInfo.icon}</span>
+            <span class="model-name">${modelInfo.name}</span>
+            ${timeText ? `<span class="model-time">${timeText}</span>` : ''}
+        </div>
+        <div class="model-response-content">
+            ${isError ? `<div class="error-state">${content}</div>` : content}
+        </div>
+    `;
+
+    // 插入到容器顶部（先完成先显示）
+    container.insertBefore(card, container.firstChild);
 }
 
 // 清空所有响应
@@ -699,17 +721,21 @@ function clearAllResponses() {
         document.getElementById('friendsCharCount').textContent = '0';
     }
 
-    // 重置所有模型卡片
+    // 重置所有状态指示器
     AI_MODELS.forEach(model => {
         updateModelStatus(model.id, 'idle', '待发送');
-        const card = document.querySelector(`.model-response-card[data-model="${model.id}"]`);
-        if (card) {
-            const contentEl = card.querySelector('.model-response-content');
-            if (contentEl) {
-                contentEl.innerHTML = '<div class="empty-state">等待发送消息...</div>';
-            }
-        }
     });
+
+    // 清空响应卡片容器
+    const container = document.getElementById('modelsResponseContainer');
+    if (container) {
+        container.innerHTML = `
+            <div class="no-responses-yet">
+                <i class="bi bi-inbox" style="font-size: 2rem; opacity: 0.3;"></i>
+                <p class="text-muted mt-2 mb-0">暂无响应结果</p>
+            </div>
+        `;
+    }
 
     showToast('已清空所有内容', 'info');
 }
