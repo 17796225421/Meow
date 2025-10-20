@@ -457,3 +457,51 @@ function playVideo(url, filename) {
         videoSource.src = '';
     });
 }
+
+// ========== 好朋友功能 ==========
+
+// 检查好朋友访问权限
+function checkFriendsAccess() {
+    // 检查是否已验证
+    const isVerified = sessionStorage.getItem('friendsVerified');
+
+    if (isVerified === 'true') {
+        showFriendsContent();
+    } else {
+        // 重置界面
+        document.getElementById('passwordPrompt').style.display = 'block';
+        document.getElementById('friendsContent').style.display = 'none';
+        document.getElementById('friendsPassword').value = '';
+        document.getElementById('passwordError').style.display = 'none';
+    }
+}
+
+// 验证密码
+function verifyPassword() {
+    const passwordInput = document.getElementById('friendsPassword');
+    const passwordError = document.getElementById('passwordError');
+    const correctPassword = '小垚的好朋友';
+
+    if (passwordInput.value === correctPassword) {
+        // 密码正确
+        sessionStorage.setItem('friendsVerified', 'true');
+        showFriendsContent();
+        showToast('验证成功！欢迎来到好朋友专区', 'success');
+    } else {
+        // 密码错误
+        passwordError.style.display = 'block';
+        passwordInput.value = '';
+        passwordInput.focus();
+
+        // 3秒后隐藏错误提示
+        setTimeout(() => {
+            passwordError.style.display = 'none';
+        }, 3000);
+    }
+}
+
+// 显示好朋友内容
+function showFriendsContent() {
+    document.getElementById('passwordPrompt').style.display = 'none';
+    document.getElementById('friendsContent').style.display = 'block';
+}

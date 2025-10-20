@@ -38,6 +38,11 @@
                     <i class="bi bi-camera-video-fill"></i> 录播回放
                 </button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link tab-button" id="friends-tab" data-bs-toggle="pill" data-bs-target="#friends-panel" type="button" role="tab" onclick="checkFriendsAccess()">
+                    <i class="bi bi-star-fill"></i> 好朋友
+                </button>
+            </li>
         </ul>
 
         <!-- 标签页内容 -->
@@ -163,6 +168,46 @@
                                     <div class="spinner-border" role="status"></div>
                                     <p class="mt-3">加载中...</p>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 好朋友标签页 -->
+            <div class="tab-pane fade" id="friends-panel" role="tabpanel">
+                <div class="card shadow-lg">
+                    <!-- 密码验证界面 -->
+                    <div id="passwordPrompt" class="card-body p-5 text-center">
+                        <div class="mb-4">
+                            <i class="bi bi-lock-fill text-warning" style="font-size: 4rem;"></i>
+                        </div>
+                        <h4 class="mb-4">这是专属区域</h4>
+                        <p class="text-muted mb-4">请输入口令访问</p>
+                        <div class="row justify-content-center">
+                            <div class="col-md-6">
+                                <div class="input-group mb-3">
+                                    <input type="text" id="friendsPassword" class="form-control form-control-lg" placeholder="请输入口令" onkeypress="if(event.key==='Enter') verifyPassword()">
+                                    <button class="btn btn-primary" onclick="verifyPassword()">
+                                        <i class="bi bi-key-fill"></i> 验证
+                                    </button>
+                                </div>
+                                <div id="passwordError" class="text-danger small" style="display: none;">
+                                    <i class="bi bi-exclamation-circle"></i> 口令错误，请重试
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 内容区域（验证后显示） -->
+                    <div id="friendsContent" class="card-body p-5" style="display: none;">
+                        <div class="text-center">
+                            <h3 class="mb-4">
+                                <i class="bi bi-star-fill text-warning"></i> 好朋友专区
+                            </h3>
+                            <div class="alert alert-info">
+                                <i class="bi bi-heart-fill text-danger"></i>
+                                <p class="mb-0">欢迎来到好朋友专区！内容即将上线...</p>
                             </div>
                         </div>
                     </div>
