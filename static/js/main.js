@@ -539,10 +539,9 @@ const AI_MODELS = [
     }
 ];
 
-// API配置
+// API配置 - 使用后端转发
 const API_CONFIG = {
-    endpoint: 'http://localhost:3001/v1/chat/completions',
-    apiKey: 'sk-UUx7BHKXOjkqKfJyd4BVk9jI04GWi7WlCiZeAWlhCvl8397d'
+    endpoint: '/api/friends/chat'  // 通过后端转发，解决手机访问问题
 };
 
 // 初始化字符计数
@@ -596,7 +595,7 @@ async function sendToAllModels() {
     sendBtn.disabled = false;
 }
 
-// 调用单个模型的API
+// 调用单个模型的API（通过后端转发）
 async function callModelAPI(modelId, modelName, message) {
     // 更新状态为加载中
     updateModelStatus(modelId, 'loading', '正在思考...');
@@ -606,8 +605,7 @@ async function callModelAPI(modelId, modelName, message) {
         const response = await fetch(API_CONFIG.endpoint, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${API_CONFIG.apiKey}`
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
                 model: modelName,
@@ -619,20 +617,24 @@ async function callModelAPI(modelId, modelName, message) {
                 ],
                 temperature: 0.7,
                 max_tokens: 2000
-            }),
-            timeout: 60000 // 60秒超时
+            })
         });
 
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
-        const data = await response.json();
+        const result = await response.json();
+
+        // 检查后端响应
+        if (!result.success) {
+            throw new Error(result.error || '未知错误');
+        }
 
         // 提取响应内容
         let content = '';
-        if (data.choices && data.choices.length > 0) {
-            content = data.choices[0].message.content;
+        if (result.data && result.data.choices && result.data.choices.length > 0) {
+            content = result.data.choices[0].message.content;
         } else {
             throw new Error('响应格式错误');
         }
