@@ -507,6 +507,9 @@ function showFriendsContent() {
 
     // 初始化字符计数
     initFriendsCharCount();
+
+    // 恢复聊天状态（如果有）
+    loadChatState();
 }
 
 // ========== 好朋友多模型聊天功能 ==========
@@ -596,6 +599,9 @@ async function sendToAllModels() {
     AI_MODELS.forEach(model => {
         updateModelStatus(model.id, 'idle', '待发送');
     });
+
+    // 保存初始状态（显示了新问题）
+    saveChatState();
 
     // 禁用发送按钮
     const sendBtn = document.getElementById('sendFriendsBtn');
@@ -691,6 +697,9 @@ function updateModelStatus(modelId, status, text) {
     if (badge) {
         badge.textContent = text;
     }
+
+    // 保存状态变化
+    saveChatState();
 }
 
 // 动态创建响应卡片（先完成的在上，后完成的在下）
@@ -728,6 +737,9 @@ function createResponseCard(modelId, content, duration, isError = false) {
 
     // 插入到容器底部（先完成的在上，后完成的在下）
     container.appendChild(card);
+
+    // 保存聊天状态
+    saveChatState();
 }
 
 // 清空所有响应
@@ -760,6 +772,9 @@ function clearAllResponses() {
     if (questionDisplay) {
         questionDisplay.style.display = 'none';
     }
+
+    // 清除保存的聊天状态
+    clearChatState();
 
     showToast('已清空所有内容', 'info');
 }
@@ -828,6 +843,9 @@ function saveToHistory() {
     clonedCards.forEach(card => {
         responsesContainer.appendChild(card);
     });
+
+    // 保存聊天状态
+    saveChatState();
 }
 
 // 切换历史项展开/折叠
@@ -842,4 +860,108 @@ function toggleHistoryItem(historyId) {
         responsesEl.classList.add('expanded');
         toggleIcon.classList.add('expanded');
     }
+}
+
+// ========== 聊天状态持久化（sessionStorage） ==========
+
+const CHAT_STATE_KEY = 'friendsChatState';
+
+// 保存聊天状态到 sessionStorage
+function saveChatState() {
+    try {
+        const state = {
+            // 当前问题
+            currentQuestion: document.getElementById('currentQuestionText')?.textContent || '',
+            questionVisible: document.getElementById('currentQuestionDisplay')?.style.display !== 'none',
+
+            // 当前响应容器HTML
+            responsesHTML: document.getElementById('modelsResponseContainer')?.innerHTML || '',
+
+            // 历史记录容器HTML
+            historyHTML: document.getElementById('historyContainer')?.innerHTML || '',
+            historyVisible: document.getElementById('chatHistory')?.style.display !== 'none',
+
+            // 模型状态
+            modelStates: {},
+
+            // 保存时间戳
+            timestamp: new Date().toISOString()
+        };
+
+        // 保存所有模型状态
+        AI_MODELS.forEach(model => {
+            const indicator = document.querySelector(`.status-indicator[data-model="${model.id}"]`);
+            if (indicator) {
+                const status = indicator.getAttribute('data-status');
+                const badge = indicator.querySelector('.indicator-badge');
+                state.modelStates[model.id] = {
+                    status: status,
+                    text: badge ? badge.textContent : '待发送'
+                };
+            }
+        });
+
+        sessionStorage.setItem(CHAT_STATE_KEY, JSON.stringify(state));
+        console.log('💾 聊天状态已保存');
+    } catch (error) {
+        console.error('保存聊天状态失败:', error);
+    }
+}
+
+// 从 sessionStorage 恢复聊天状态
+function loadChatState() {
+    try {
+        const stateJSON = sessionStorage.getItem(CHAT_STATE_KEY);
+        if (!stateJSON) {
+            console.log('📭 无保存的聊天状态');
+            return;
+        }
+
+        const state = JSON.parse(stateJSON);
+        console.log('📂 正在恢复聊天状态...');
+
+        // 恢复当前问题
+        if (state.currentQuestion && state.questionVisible) {
+            const questionDisplay = document.getElementById('currentQuestionDisplay');
+            const questionText = document.getElementById('currentQuestionText');
+            if (questionDisplay && questionText) {
+                questionText.textContent = state.currentQuestion;
+                questionDisplay.style.display = 'block';
+            }
+        }
+
+        // 恢复响应容器
+        const responsesContainer = document.getElementById('modelsResponseContainer');
+        if (responsesContainer && state.responsesHTML) {
+            responsesContainer.innerHTML = state.responsesHTML;
+        }
+
+        // 恢复历史记录
+        const historyContainer = document.getElementById('historyContainer');
+        const chatHistory = document.getElementById('chatHistory');
+        if (historyContainer && state.historyHTML) {
+            historyContainer.innerHTML = state.historyHTML;
+            if (chatHistory && state.historyVisible) {
+                chatHistory.style.display = 'block';
+            }
+        }
+
+        // 恢复模型状态
+        if (state.modelStates) {
+            Object.keys(state.modelStates).forEach(modelId => {
+                const modelState = state.modelStates[modelId];
+                updateModelStatus(modelId, modelState.status, modelState.text);
+            });
+        }
+
+        console.log('✅ 聊天状态恢复完成');
+    } catch (error) {
+        console.error('恢复聊天状态失败:', error);
+    }
+}
+
+// 清除保存的聊天状态
+function clearChatState() {
+    sessionStorage.removeItem(CHAT_STATE_KEY);
+    console.log('🗑️ 聊天状态已清除');
 }
