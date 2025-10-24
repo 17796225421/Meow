@@ -115,6 +115,8 @@ let castWs: DyCast | undefined;
 let relayWs: RelayCast | undefined;
 // 连接开始时间
 let connectStartTime: Date | undefined;
+// 周期性保存定时器
+let autoSaveTimer: number | undefined;
 
 /**
  * 验证房间号
