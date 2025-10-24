@@ -13,6 +13,7 @@ router = APIRouter(prefix="/api", tags=["录播"])
 # 录播目录
 RECORDINGS_DIR = os.path.join(
     os.path.dirname(__file__),
+    'DouyinLiveRecorder',
     'DouyinLiveRecorder_v4.0.6',
     'downloads',
     '抖音直播',
