@@ -349,8 +349,8 @@ async function checkServiceStatus() {
 
 // 按时间间隔分组录播为场次
 function groupRecordingsBySessions(recordings) {
-    // 间隔阈值：1小时 = 3600000 毫秒
-    const SESSION_GAP_MS = 60 * 60 * 1000;
+    // 间隔阈值：4小时 = 14400000 毫秒
+    const SESSION_GAP_MS = 4 * 60 * 60 * 1000;
 
     // 先按时间正序排序（最早的在前）
     const sorted = [...recordings].sort((a, b) =>
