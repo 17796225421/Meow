@@ -476,7 +476,7 @@ function createRecordingItem(recording) {
                 </div>
             </div>
             <div class="col-md-3 text-md-end mt-3 mt-md-0">
-                <button class="btn btn-primary mb-2 w-100" onclick="playVideo('${recording.url}', '${recording.filename}')">
+                <button class="btn btn-primary mb-2 w-100" onclick="playVideo('${recording.url}', '${recording.filename}', event)">
                     <i class="bi bi-play-fill"></i> 在线观看
                 </button>
                 <a href="${recording.url}" download="${recording.filename}" class="btn btn-success w-100">
@@ -585,7 +585,7 @@ function toggleSession(sessionId) {
 }
 
 // 播放视频（内嵌模式）
-function playVideo(url, filename) {
+function playVideo(url, filename, event) {
     const player = document.getElementById('embeddedVideoPlayer');
     const video = document.getElementById('embeddedVideo');
     const videoSource = document.getElementById('embeddedVideoSource');
@@ -595,6 +595,14 @@ function playVideo(url, filename) {
     videoSource.src = url;
     video.load();
     videoTitle.textContent = filename;
+
+    // 找到被点击的录播项，将播放器移动到其下方
+    if (event) {
+        const recordingItem = event.target.closest('.recording-item');
+        if (recordingItem) {
+            recordingItem.after(player);
+        }
+    }
 
     // 显示播放器
     player.style.display = 'block';
