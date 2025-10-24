@@ -330,6 +330,22 @@ body {
     .emotion-btn .desc {
         font-size: 0.75rem;
     }
+
+    /* 内嵌视频播放器响应式 */
+    .embedded-video-player {
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+
+    .video-player-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .video-player-header h6 {
+        font-size: 0.95rem;
+    }
 }
 
 /* 标签页样式 */
@@ -366,6 +382,48 @@ body {
 
 .bg-gradient-primary {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* 内嵌视频播放器样式 */
+.embedded-video-player {
+    background: #f8f9fa;
+    border: 2px solid #667eea;
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 25px;
+    animation: slideDown 0.4s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.video-player-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.video-player-header h6 {
+    color: #333;
+    font-weight: 700;
+    margin: 0;
+}
+
+.video-player-body video {
+    border-radius: 10px;
+    background: #000;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .recording-item {

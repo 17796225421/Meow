@@ -438,24 +438,43 @@ function renderRecordings(recordings) {
     });
 }
 
-// 播放视频
+// 播放视频（内嵌模式）
 function playVideo(url, filename) {
-    const modal = new bootstrap.Modal(document.getElementById('videoModal'));
-    const videoPlayer = document.getElementById('videoPlayer');
-    const videoSource = document.getElementById('videoSource');
-    const modalTitle = document.getElementById('videoModalTitle');
+    const player = document.getElementById('embeddedVideoPlayer');
+    const video = document.getElementById('embeddedVideo');
+    const videoSource = document.getElementById('embeddedVideoSource');
+    const videoTitle = document.getElementById('embeddedVideoTitle');
 
+    // 设置视频源和标题
     videoSource.src = url;
-    videoPlayer.load();
-    modalTitle.textContent = filename;
+    video.load();
+    videoTitle.textContent = filename;
 
-    modal.show();
+    // 显示播放器
+    player.style.display = 'block';
 
-    // 模态框关闭时暂停视频
-    document.getElementById('videoModal').addEventListener('hidden.bs.modal', function () {
-        videoPlayer.pause();
-        videoSource.src = '';
+    // 滚动到播放器位置
+    player.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // 自动播放
+    video.play().catch(err => {
+        console.log('自动播放失败:', err);
     });
+}
+
+// 关闭内嵌视频播放器
+function closeEmbeddedPlayer() {
+    const player = document.getElementById('embeddedVideoPlayer');
+    const video = document.getElementById('embeddedVideo');
+    const videoSource = document.getElementById('embeddedVideoSource');
+
+    // 暂停并重置视频
+    video.pause();
+    videoSource.src = '';
+    video.load();
+
+    // 隐藏播放器
+    player.style.display = 'none';
 }
 
 // ========== 好朋友功能 ==========
