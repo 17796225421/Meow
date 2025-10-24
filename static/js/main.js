@@ -546,13 +546,13 @@ function createDanmakuSection(danmakuFiles, sessionId) {
                         title="礼物">
                     🎁
                 </button>
-                <button class="danmaku-filter-btn active" data-type="like" onclick="toggleDanmakuFilter('${danmakuId}', 'like')"
-                        style="border: none; background: none; cursor: pointer; font-size: 1.5rem; opacity: 1; transition: opacity 0.2s;"
+                <button class="danmaku-filter-btn" data-type="like" onclick="toggleDanmakuFilter('${danmakuId}', 'like')"
+                        style="border: none; background: none; cursor: pointer; font-size: 1.5rem; opacity: 0.3; transition: opacity 0.2s;"
                         title="点赞">
                     ❤️
                 </button>
-                <button class="danmaku-filter-btn active" data-type="member" onclick="toggleDanmakuFilter('${danmakuId}', 'member')"
-                        style="border: none; background: none; cursor: pointer; font-size: 1.5rem; opacity: 1; transition: opacity 0.2s;"
+                <button class="danmaku-filter-btn" data-type="member" onclick="toggleDanmakuFilter('${danmakuId}', 'member')"
+                        style="border: none; background: none; cursor: pointer; font-size: 1.5rem; opacity: 0.3; transition: opacity 0.2s;"
                         title="进入直播间">
                     👋
                 </button>
@@ -625,6 +625,9 @@ async function loadDanmaku(danmakuId, fileUrls) {
 
         // 渲染弹幕
         renderDanmakuList(danmakuId, allDanmaku);
+
+        // 应用默认筛选（隐藏 like 和 member）
+        applyDanmakuFilters(danmakuId);
     } catch (error) {
         console.error('加载弹幕失败:', error);
         container.innerHTML = `
