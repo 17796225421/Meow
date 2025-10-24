@@ -574,14 +574,19 @@ function createDanmakuSection(danmakuFiles, sessionId) {
 
     const danmakuId = `danmaku-${sessionId}`;
 
+    // 按时间正序排序（最早的在前，最新的在后）
+    const sortedFiles = [...danmakuFiles].sort((a, b) =>
+        new Date(a.created_at) - new Date(b.created_at)
+    );
+
     section.innerHTML = `
         <div class="mb-3">
             <h6 class="mb-2">
                 <i class="bi bi-chat-dots-fill me-2" style="color: #667eea;"></i>
-                弹幕记录（${danmakuFiles.length} 个文件）
+                弹幕记录（${sortedFiles.length} 个文件）
             </h6>
             <div class="danmaku-files mb-2">
-                ${danmakuFiles.map(f => `
+                ${sortedFiles.map(f => `
                     <a href="${f.url}" download="${f.filename}" class="badge bg-secondary me-2 text-decoration-none" style="cursor: pointer;" title="点击下载">
                         <i class="bi bi-file-earmark-text"></i> ${f.filename}
                         <i class="bi bi-download ms-1" style="font-size: 0.8em;"></i>
@@ -628,8 +633,8 @@ function createDanmakuSection(danmakuFiles, sessionId) {
         </div>
     `;
 
-    // 保存文件URL到section元素，后续自动加载
-    section.dataset.fileUrls = JSON.stringify(danmakuFiles.map(f => f.url));
+    // 保存文件URL到section元素，后续自动加载（使用排序后的文件列表）
+    section.dataset.fileUrls = JSON.stringify(sortedFiles.map(f => f.url));
     section.dataset.danmakuId = danmakuId;
 
     return section;
