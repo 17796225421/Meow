@@ -257,7 +257,8 @@ const addConsoleMessage = function (content: string) {
         id: getId(),
         method: CastMethod.CUSTOM,
         content,
-        user: { name: '控制台' }
+        user: { name: '控制台' },
+        timestamp: Date.now()
       }
     ]);
 };
@@ -531,7 +532,7 @@ const saveCastToFile = function () {
 // 组件挂载后自动连接到指定房间
 onMounted(() => {
   // 设置房间号
-  roomNum.value = '498573413825';
+  roomNum.value = '63672926965';
 
   // 延迟1秒后自动连接，确保组件完全加载
   setTimeout(() => {

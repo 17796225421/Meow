@@ -145,6 +145,8 @@ export interface DyMessage {
   rtfContent?: CastRtfContent[];
   room?: LiveRoom;
   rank?: LiveRankItem[];
+  /** 消息时间戳 (毫秒) */
+  timestamp?: number;
 }
 
 export enum CastMethod {
@@ -748,6 +750,8 @@ export class DyCast {
     const method = msg.method;
     const data: DyMessage | null = {};
     data.id = msg.msgId;
+    // 添加时间戳（毫秒）
+    data.timestamp = Date.now();
     let message = null;
     let payload = msg.payload;
     if (!payload) return null;

@@ -702,6 +702,17 @@ function renderDanmakuList(danmakuId, danmakuList) {
         const method = (msg.method || '未知').toLowerCase();
         const content = msg.content || '';
         const userName = msg.user?.name || msg.user?.nickname || '匿名';
+        const timestamp = msg.timestamp;
+
+        // 格式化时间戳为 [HH:MM:SS]
+        let timeStr = '';
+        if (timestamp) {
+            const date = new Date(timestamp);
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            timeStr = `[${hours}:${minutes}:${seconds}] `;
+        }
 
         // 根据类型显示不同的图标和颜色（参考dycast配色）
         let icon = '💬';
@@ -740,6 +751,7 @@ function renderDanmakuList(danmakuId, danmakuList) {
 
         return `
             <div class="danmaku-item d-flex align-items-start mb-1 pb-1" data-type="${dataType}" style="border-bottom: 1px solid #f1f3f5;">
+                <span style="color: #999; font-size: 0.85em; margin-right: 4px; flex-shrink: 0;">${timeStr}</span>
                 <div class="me-2" style="font-size: 1rem; line-height: 1.4;">${icon}</div>
                 <div class="flex-grow-1" style="line-height: 1.4;">
                     <strong style="color: ${userNameColor};">${userName}</strong><span style="color: #adb5bd; margin: 0 3px;">:</span><span style="color: ${textColor}; word-break: break-word;">${displayContent}</span>
