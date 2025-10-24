@@ -279,8 +279,10 @@ const connectLive = function () {
   try {
     // 清空上一次连接的消息
     clearMessageList();
-    // 记录连接开始时间
-    connectStartTime = new Date();
+    // 记录连接开始时间（只在首次连接或清空后记录）
+    if (!connectStartTime) {
+      connectStartTime = new Date();
+    }
     CLog.debug('正在连接:', roomNum.value);
     SkMessage.info(`正在连接：${roomNum.value}`);
     const cast = new DyCast(roomNum.value);
@@ -318,6 +320,9 @@ const connectLive = function () {
           SkMessage.success(`弹幕已自动保存 (${allCasts.length}条)`);
         });
       }
+
+      // 重置开始时间，下次连接时会记录新的时间
+      connectStartTime = undefined;
 
       switch (code) {
         case DyCastCloseCode.NORMAL:

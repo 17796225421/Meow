@@ -43,8 +43,12 @@ def save_danmaku():
         # 获取开始时间，如果没有提供则使用当前时间
         start_time = data.get('startTime')
         if start_time:
-            # 前端传来的是 ISO 格式时间戳
+            # 前端传来的是 UTC 时间的 ISO 格式字符串
             dt = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
+            # 转换为本地时区（北京时间）
+            from datetime import timezone, timedelta
+            local_tz = timezone(timedelta(hours=8))  # 北京时间 UTC+8
+            dt = dt.astimezone(local_tz)
         else:
             dt = datetime.now()
 
