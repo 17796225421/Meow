@@ -291,21 +291,32 @@ const connectLive = function () {
       connectStatus.value = 1;
       setRoomInfo(info);
       addConsoleMessage('直播间已连接');
+      // 启动周期性自动保存
+      startAutoSave();
     });
     cast.on('error', err => {
       CLog.error('DyCast 连接出错 =>', err);
       SkMessage.error(`连接出错: ${err}`);
       connectStatus.value = 2;
       setRoomInputStatus(false);
+      // 停止周期性保存
+      stopAutoSave();
     });
     cast.on('close', (code, reason) => {
       CLog.info(`DyCast 房间已关闭[${code}] => ${reason}`);
       connectStatus.value = 3;
       setRoomInputStatus(false);
 
-      // 自动保存弹幕
+      // 停止周期性保存
+      stopAutoSave();
+
+      // 最后一次保存弹幕
       if (allCasts.length > 0) {
-        autoSaveCastToServer();
+        addConsoleMessage(`正在保存弹幕 (${allCasts.length}条)...`);
+        autoSaveCastToServer().then(() => {
+          addConsoleMessage(`弹幕已保存 (共${allCasts.length}条)`);
+          SkMessage.success(`弹幕已自动保存 (${allCasts.length}条)`);
+        });
       }
 
       switch (code) {
@@ -418,7 +429,6 @@ const autoSaveCastToServer = async function () {
     }
 
     CLog.info(`正在自动保存弹幕，共 ${len} 条`);
-    addConsoleMessage(`正在保存弹幕 (${len}条)...`);
 
     // 准备数据
     const data = {
@@ -440,17 +450,41 @@ const autoSaveCastToServer = async function () {
 
     if (result.success) {
       CLog.info(`弹幕保存成功: ${result.filename}`);
-      addConsoleMessage(`弹幕已保存: ${result.filename} (${result.count}条)`);
-      SkMessage.success(`弹幕已保存: ${result.filename}`);
     } else {
       CLog.error('弹幕保存失败:', result.message);
-      addConsoleMessage(`弹幕保存失败: ${result.message}`);
-      SkMessage.error(`弹幕保存失败: ${result.message}`);
     }
   } catch (err) {
     CLog.error('弹幕保存出错:', err);
-    addConsoleMessage('弹幕保存出错，请确保保存服务已启动');
-    SkMessage.error('弹幕保存出错，请检查保存服务');
+  }
+};
+
+/**
+ * 启动周期性自动保存（每1分钟）
+ */
+const startAutoSave = function () {
+  // 清除之前的定时器
+  if (autoSaveTimer) {
+    clearInterval(autoSaveTimer);
+  }
+
+  // 每1分钟保存一次
+  autoSaveTimer = window.setInterval(() => {
+    CLog.info('执行周期性弹幕保存...');
+    autoSaveCastToServer();
+  }, 60 * 1000); // 60秒 = 1分钟
+
+  CLog.info('已启动周期性自动保存（每1分钟）');
+  addConsoleMessage('已启动周期性自动保存（每1分钟）');
+};
+
+/**
+ * 停止周期性自动保存
+ */
+const stopAutoSave = function () {
+  if (autoSaveTimer) {
+    clearInterval(autoSaveTimer);
+    autoSaveTimer = undefined;
+    CLog.info('已停止周期性自动保存');
   }
 };
 
