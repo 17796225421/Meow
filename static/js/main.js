@@ -563,7 +563,7 @@ function createDanmakuSection(danmakuFiles, sessionId) {
                     ⭐
                 </button>
             </div>
-            <div id="${danmakuId}" class="danmaku-content" style="max-height: 400px; overflow-y: auto; background: white; border-radius: 4px; padding: 12px;">
+            <div id="${danmakuId}" class="danmaku-content" style="max-height: 600px; overflow-y: auto; background: white; border-radius: 4px; padding: 12px;">
                 <div class="text-center text-muted">
                     <div class="spinner-border spinner-border-sm" role="status"></div>
                     <span class="ms-2">加载中...</span>
