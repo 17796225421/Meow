@@ -33,11 +33,13 @@ def save_danmaku():
         data = request.get_json()
 
         if not data:
+            logger.warning('没有接收到数据')
             return jsonify({'success': False, 'message': '没有接收到数据'}), 400
 
         # 获取弹幕数据
         danmaku_list = data.get('danmaku', [])
         if not danmaku_list or len(danmaku_list) == 0:
+            logger.warning('弹幕列表为空')
             return jsonify({'success': False, 'message': '弹幕列表为空'}), 400
 
         # 获取开始时间，如果没有提供则使用当前时间
@@ -49,8 +51,10 @@ def save_danmaku():
             from datetime import timezone, timedelta
             local_tz = timezone(timedelta(hours=8))  # 北京时间 UTC+8
             dt = dt.astimezone(local_tz)
+            logger.info(f'使用连接开始时间: {dt.strftime("%Y-%m-%d %H:%M:%S")}')
         else:
             dt = datetime.now()
+            logger.info(f'使用当前时间: {dt.strftime("%Y-%m-%d %H:%M:%S")}')
 
         # 生成文件名：SL_林木垚Meow_2025-10-04_15-02-58.json
         timestamp = dt.strftime('%Y-%m-%d_%H-%M-%S')
@@ -66,7 +70,12 @@ def save_danmaku():
         with open(filepath, 'w', encoding='utf-8') as f:
             json.dump(danmaku_list, f, ensure_ascii=False, indent=2)
 
-        logger.info(f"弹幕已保存: {filepath} (共 {len(danmaku_list)} 条)")
+        logger.info('=' * 60)
+        logger.info(f'✓ 弹幕保存成功')
+        logger.info(f'  文件名: {filename}')
+        logger.info(f'  路径: {filepath}')
+        logger.info(f'  弹幕数: {len(danmaku_list)} 条')
+        logger.info('=' * 60)
 
         return jsonify({
             'success': True,
@@ -95,7 +104,14 @@ def health_check():
 
 
 if __name__ == '__main__':
-    logger.info(f"弹幕保存服务启动")
+    print("\n" + "=" * 60)
+    print("弹幕保存服务")
+    print("=" * 60)
     logger.info(f"保存目录: {SAVE_DIR}")
+    logger.info(f"主播名称: {STREAMER_NAME}")
     logger.info(f"服务地址: http://localhost:5175")
-    app.run(host='0.0.0.0', port=5175, debug=True)
+    logger.info(f"健康检查: http://localhost:5175/api/health")
+    print("=" * 60)
+    print("服务已启动，等待弹幕数据...")
+    print("按 Ctrl+C 停止服务\n")
+    app.run(host='0.0.0.0', port=5175, debug=False)

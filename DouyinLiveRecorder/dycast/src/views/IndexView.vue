@@ -117,6 +117,10 @@ let relayWs: RelayCast | undefined;
 let connectStartTime: Date | undefined;
 // 周期性保存定时器
 let autoSaveTimer: number | undefined;
+// 自动重连定时器
+let autoReconnectTimer: number | undefined;
+// 自动重连间隔（30秒）
+const AUTO_RECONNECT_INTERVAL = 30 * 1000;
 
 /**
  * 验证房间号
@@ -294,6 +298,8 @@ const connectLive = function () {
       connectStatus.value = 1;
       setRoomInfo(info);
       addConsoleMessage('直播间已连接');
+      // 停止自动重连
+      stopAutoReconnect();
       // 启动周期性自动保存
       startAutoSave();
     });
@@ -330,7 +336,9 @@ const connectLive = function () {
           SkMessage.success('断开成功');
           break;
         case DyCastCloseCode.LIVE_END:
-          SkMessage.info('主播已下播');
+          SkMessage.info('主播未开播或已下播');
+          // 自动重连
+          scheduleAutoReconnect();
           break;
         case DyCastCloseCode.CANNOT_RECEIVE:
           SkMessage.error('无法正常接收信息，已关闭');
@@ -339,7 +347,7 @@ const connectLive = function () {
           SkMessage.info('房间已关闭');
       }
       if (code === DyCastCloseCode.LIVE_END) {
-        addConsoleMessage(reason || '主播尚未开播或已下播');
+        addConsoleMessage(reason || '主播尚未开播或已下播，30秒后自动重连...');
       } else {
         if (statusPanelRef.value) addConsoleMessage(`连接已关闭，共持续: ${statusPanelRef.value.getDuration()}`);
         else addConsoleMessage('连接已关闭');
@@ -374,6 +382,8 @@ const connectLive = function () {
 };
 /** 断开连接 */
 const disconnectLive = function () {
+  // 停止自动重连
+  stopAutoReconnect();
   if (castWs) castWs.close(1000, '断开连接');
 };
 
@@ -491,6 +501,35 @@ const stopAutoSave = function () {
     clearInterval(autoSaveTimer);
     autoSaveTimer = undefined;
     CLog.info('已停止周期性自动保存');
+  }
+};
+
+/**
+ * 调度自动重连
+ */
+const scheduleAutoReconnect = function () {
+  // 清除之前的定时器
+  if (autoReconnectTimer) {
+    clearTimeout(autoReconnectTimer);
+  }
+
+  CLog.info(`将在 ${AUTO_RECONNECT_INTERVAL / 1000} 秒后自动重连...`);
+
+  autoReconnectTimer = window.setTimeout(() => {
+    CLog.info('开始自动重连...');
+    addConsoleMessage('正在自动重连...');
+    connectLive();
+  }, AUTO_RECONNECT_INTERVAL);
+};
+
+/**
+ * 停止自动重连
+ */
+const stopAutoReconnect = function () {
+  if (autoReconnectTimer) {
+    clearTimeout(autoReconnectTimer);
+    autoReconnectTimer = undefined;
+    CLog.info('已停止自动重连');
   }
 };
 
