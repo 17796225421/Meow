@@ -521,7 +521,7 @@ function createDanmakuSection(danmakuFiles, sessionId) {
                 <i class="bi bi-chat-dots-fill me-2" style="color: #667eea;"></i>
                 弹幕记录（${danmakuFiles.length} 个文件）
             </h6>
-            <button class="btn btn-sm btn-outline-primary" onclick="loadDanmaku('${danmakuId}', ${JSON.stringify(danmakuFiles.map(f => f.url)).replace(/"/g, '&quot;')})">
+            <button class="btn btn-sm btn-outline-primary" onclick="toggleDanmakuView('${danmakuId}', ${JSON.stringify(danmakuFiles.map(f => f.url)).replace(/"/g, '&quot;')})">
                 <i class="bi bi-eye-fill"></i> 查看弹幕
             </button>
         </div>
@@ -532,10 +532,41 @@ function createDanmakuSection(danmakuFiles, sessionId) {
                 </span>
             `).join('')}
         </div>
-        <div id="${danmakuId}" class="danmaku-content" style="display: none; max-height: 400px; overflow-y: auto; background: white; border-radius: 4px; padding: 12px;">
-            <div class="text-center text-muted">
-                <div class="spinner-border spinner-border-sm" role="status"></div>
-                <span class="ms-2">加载中...</span>
+        <div id="${danmakuId}-container" style="display: none;">
+            <!-- 弹幕类型筛选 -->
+            <div class="danmaku-filters mb-3 p-2" style="background: white; border-radius: 4px; display: flex; gap: 10px; align-items: center;">
+                <span style="color: #868e96; font-size: 14px; font-weight: 500;">筛选：</span>
+                <button class="danmaku-filter-btn active" data-type="chat" onclick="toggleDanmakuFilter('${danmakuId}', 'chat')"
+                        style="border: none; background: none; cursor: pointer; font-size: 1.5rem; opacity: 1; transition: opacity 0.2s;"
+                        title="聊天消息">
+                    💬
+                </button>
+                <button class="danmaku-filter-btn active" data-type="gift" onclick="toggleDanmakuFilter('${danmakuId}', 'gift')"
+                        style="border: none; background: none; cursor: pointer; font-size: 1.5rem; opacity: 1; transition: opacity 0.2s;"
+                        title="礼物">
+                    🎁
+                </button>
+                <button class="danmaku-filter-btn active" data-type="like" onclick="toggleDanmakuFilter('${danmakuId}', 'like')"
+                        style="border: none; background: none; cursor: pointer; font-size: 1.5rem; opacity: 1; transition: opacity 0.2s;"
+                        title="点赞">
+                    ❤️
+                </button>
+                <button class="danmaku-filter-btn active" data-type="member" onclick="toggleDanmakuFilter('${danmakuId}', 'member')"
+                        style="border: none; background: none; cursor: pointer; font-size: 1.5rem; opacity: 1; transition: opacity 0.2s;"
+                        title="进入直播间">
+                    👋
+                </button>
+                <button class="danmaku-filter-btn active" data-type="social" onclick="toggleDanmakuFilter('${danmakuId}', 'social')"
+                        style="border: none; background: none; cursor: pointer; font-size: 1.5rem; opacity: 1; transition: opacity 0.2s;"
+                        title="关注">
+                    ⭐
+                </button>
+            </div>
+            <div id="${danmakuId}" class="danmaku-content" style="max-height: 400px; overflow-y: auto; background: white; border-radius: 4px; padding: 12px;">
+                <div class="text-center text-muted">
+                    <div class="spinner-border spinner-border-sm" role="status"></div>
+                    <span class="ms-2">加载中...</span>
+                </div>
             </div>
         </div>
     `;
@@ -543,9 +574,9 @@ function createDanmakuSection(danmakuFiles, sessionId) {
     return section;
 }
 
-// 加载并显示弹幕
-async function loadDanmaku(danmakuId, fileUrls) {
-    const container = document.getElementById(danmakuId);
+// 切换弹幕显示
+async function toggleDanmakuView(danmakuId, fileUrls) {
+    const container = document.getElementById(`${danmakuId}-container`);
 
     // 切换显示状态
     if (container.style.display !== 'none') {
@@ -554,6 +585,19 @@ async function loadDanmaku(danmakuId, fileUrls) {
     }
 
     container.style.display = 'block';
+
+    // 如果已经加载过，直接显示
+    const content = document.getElementById(danmakuId);
+    if (content.dataset.loaded === 'true') {
+        return;
+    }
+
+    await loadDanmaku(danmakuId, fileUrls);
+}
+
+// 加载弹幕数据
+async function loadDanmaku(danmakuId, fileUrls) {
+    const container = document.getElementById(danmakuId);
 
     try {
         // 加载所有弹幕文件
@@ -575,51 +619,12 @@ async function loadDanmaku(danmakuId, fileUrls) {
             return timeA - timeB;
         });
 
+        // 保存原始数据
+        container.dataset.danmaku = JSON.stringify(allDanmaku);
+        container.dataset.loaded = 'true';
+
         // 渲染弹幕
-        if (allDanmaku.length === 0) {
-            container.innerHTML = `
-                <div class="text-center text-muted py-3">
-                    <i class="bi bi-chat-dots"></i>
-                    <p class="mb-0 mt-2">暂无弹幕</p>
-                </div>
-            `;
-        } else {
-            container.innerHTML = allDanmaku.map(msg => {
-                const method = msg.method || '未知';
-                const content = msg.content || '';
-                const userName = msg.user?.name || msg.user?.nickname || '匿名';
-
-                // 根据类型显示不同的图标和颜色
-                let icon = '💬';
-                let typeColor = '#667eea';
-
-                if (method === 'gift' || method === 'GIFT') {
-                    icon = '🎁';
-                    typeColor = '#ff6b6b';
-                } else if (method === 'like' || method === 'LIKE') {
-                    icon = '❤️';
-                    typeColor = '#ff8787';
-                } else if (method === 'member' || method === 'MEMBER') {
-                    icon = '👋';
-                    typeColor = '#51cf66';
-                } else if (method === 'social' || method === 'SOCIAL') {
-                    icon = '⭐';
-                    typeColor = '#ffd43b';
-                }
-
-                return `
-                    <div class="danmaku-item d-flex align-items-start mb-2 pb-2" style="border-bottom: 1px solid #f1f3f5;">
-                        <div class="me-2" style="font-size: 1.2rem;">${icon}</div>
-                        <div class="flex-grow-1">
-                            <div class="d-flex align-items-center mb-1">
-                                <strong style="color: ${typeColor};">${userName}</strong>
-                            </div>
-                            <div style="color: #495057; word-break: break-word;">${content}</div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
+        renderDanmakuList(danmakuId, allDanmaku);
     } catch (error) {
         console.error('加载弹幕失败:', error);
         container.innerHTML = `
@@ -629,6 +634,101 @@ async function loadDanmaku(danmakuId, fileUrls) {
             </div>
         `;
     }
+}
+
+// 渲染弹幕列表
+function renderDanmakuList(danmakuId, danmakuList) {
+    const container = document.getElementById(danmakuId);
+
+    if (danmakuList.length === 0) {
+        container.innerHTML = `
+            <div class="text-center text-muted py-3">
+                <i class="bi bi-chat-dots"></i>
+                <p class="mb-0 mt-2">暂无弹幕</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = danmakuList.map(msg => {
+        const method = (msg.method || '未知').toLowerCase();
+        const content = msg.content || '';
+        const userName = msg.user?.name || msg.user?.nickname || '匿名';
+
+        // 根据类型显示不同的图标和颜色
+        let icon = '💬';
+        let typeColor = '#667eea';
+        let dataType = 'chat';
+
+        if (method.includes('gift')) {
+            icon = '🎁';
+            typeColor = '#ff6b6b';
+            dataType = 'gift';
+        } else if (method.includes('like')) {
+            icon = '❤️';
+            typeColor = '#ff8787';
+            dataType = 'like';
+        } else if (method.includes('member')) {
+            icon = '👋';
+            typeColor = '#51cf66';
+            dataType = 'member';
+        } else if (method.includes('social')) {
+            icon = '⭐';
+            typeColor = '#ffd43b';
+            dataType = 'social';
+        }
+
+        return `
+            <div class="danmaku-item d-flex align-items-start mb-2 pb-2" data-type="${dataType}" style="border-bottom: 1px solid #f1f3f5;">
+                <div class="me-2" style="font-size: 1.2rem;">${icon}</div>
+                <div class="flex-grow-1">
+                    <div class="d-flex align-items-center mb-1">
+                        <strong style="color: ${typeColor};">${userName}</strong>
+                    </div>
+                    <div style="color: #495057; word-break: break-word;">${content}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// 切换弹幕类型筛选
+function toggleDanmakuFilter(danmakuId, type) {
+    const container = document.getElementById(`${danmakuId}-container`);
+    const filterBtn = container.querySelector(`.danmaku-filter-btn[data-type="${type}"]`);
+
+    // 切换按钮状态
+    if (filterBtn.classList.contains('active')) {
+        filterBtn.classList.remove('active');
+        filterBtn.style.opacity = '0.3';
+    } else {
+        filterBtn.classList.add('active');
+        filterBtn.style.opacity = '1';
+    }
+
+    // 应用筛选
+    applyDanmakuFilters(danmakuId);
+}
+
+// 应用弹幕筛选
+function applyDanmakuFilters(danmakuId) {
+    const container = document.getElementById(`${danmakuId}-container`);
+    const content = document.getElementById(danmakuId);
+
+    // 获取所有激活的筛选类型
+    const activeFilters = Array.from(container.querySelectorAll('.danmaku-filter-btn.active'))
+        .map(btn => btn.dataset.type);
+
+    // 显示/隐藏弹幕项
+    const danmakuItems = content.querySelectorAll('.danmaku-item');
+    danmakuItems.forEach(item => {
+        const itemType = item.dataset.type;
+        if (activeFilters.includes(itemType)) {
+            item.style.display = 'flex';
+        } else {
+            item.style.display = 'none';
+        }
+    });
 }
 
 // 渲染录播列表（按场次分组）
