@@ -347,6 +347,58 @@ async function checkServiceStatus() {
 
 // ========== 录播功能 ==========
 
+// 按时间间隔分组录播为场次
+function groupRecordingsBySessions(recordings) {
+    // 间隔阈值：1小时 = 3600000 毫秒
+    const SESSION_GAP_MS = 60 * 60 * 1000;
+
+    // 先按时间正序排序（最早的在前）
+    const sorted = [...recordings].sort((a, b) =>
+        new Date(a.created_at) - new Date(b.created_at)
+    );
+
+    const sessions = [];
+    let currentSession = null;
+
+    sorted.forEach(recording => {
+        const recordingTime = new Date(recording.created_at);
+
+        if (!currentSession) {
+            // 第一个录播，创建第一个场次
+            currentSession = {
+                recordings: [recording],
+                startTime: recordingTime,
+                endTime: recordingTime
+            };
+        } else {
+            // 计算与当前场次最后一个录播的时间差
+            const timeDiff = recordingTime - currentSession.endTime;
+
+            if (timeDiff > SESSION_GAP_MS) {
+                // 间隔超过1小时，保存当前场次，创建新场次
+                sessions.push(currentSession);
+                currentSession = {
+                    recordings: [recording],
+                    startTime: recordingTime,
+                    endTime: recordingTime
+                };
+            } else {
+                // 间隔小于1小时，加入当前场次
+                currentSession.recordings.push(recording);
+                currentSession.endTime = recordingTime;
+            }
+        }
+    });
+
+    // 保存最后一个场次
+    if (currentSession) {
+        sessions.push(currentSession);
+    }
+
+    // 场次倒序（最新的场次在前）
+    return sessions.reverse();
+}
+
 // 加载录播列表
 async function loadRecordings() {
     const container = document.getElementById('recordingsList');
@@ -383,7 +435,61 @@ async function loadRecordings() {
     }
 }
 
-// 渲染录播列表
+// 格式化场次日期
+function formatSessionDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}年${month}月${day}日`;
+}
+
+// 格式化场次时间（只显示时分）
+function formatSessionTime(date) {
+    const hour = String(date.getHours()).padStart(2, '0');
+    const minute = String(date.getMinutes()).padStart(2, '0');
+    return `${hour}:${minute}`;
+}
+
+// 创建单个录播项元素
+function createRecordingItem(recording) {
+    const item = document.createElement('div');
+    item.className = 'recording-item';
+
+    item.innerHTML = `
+        <div class="row align-items-center">
+            <div class="col-md-3">
+                <div class="recording-thumbnail" style="height: 120px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center;">
+                    <i class="bi bi-play-circle-fill" style="font-size: 3rem; color: white;"></i>
+                </div>
+            </div>
+            <div class="col-md-6 recording-info mt-3 mt-md-0">
+                <h6>${recording.filename}</h6>
+                <div class="recording-meta">
+                    <span class="me-3">
+                        <i class="bi bi-calendar3"></i>
+                        ${recording.date || '未知日期'}
+                    </span>
+                    <span class="badge bg-info">
+                        <i class="bi bi-hdd"></i>
+                        ${recording.size_mb} MB
+                    </span>
+                </div>
+            </div>
+            <div class="col-md-3 text-md-end mt-3 mt-md-0">
+                <button class="btn btn-primary mb-2 w-100" onclick="playVideo('${recording.url}', '${recording.filename}')">
+                    <i class="bi bi-play-fill"></i> 在线观看
+                </button>
+                <a href="${recording.url}" download="${recording.filename}" class="btn btn-success w-100">
+                    <i class="bi bi-download"></i> 下载
+                </a>
+            </div>
+        </div>
+    `;
+
+    return item;
+}
+
+// 渲染录播列表（按场次分组）
 function renderRecordings(recordings) {
     const container = document.getElementById('recordingsList');
 
@@ -397,45 +503,85 @@ function renderRecordings(recordings) {
         return;
     }
 
+    // 按场次分组
+    const sessions = groupRecordingsBySessions(recordings);
+
     container.innerHTML = '';
 
-    recordings.forEach(recording => {
-        const item = document.createElement('div');
-        item.className = 'recording-item';
+    sessions.forEach((session, index) => {
+        // 计算场次统计数据
+        const sessionNumber = sessions.length - index; // 倒序编号：最新场次编号最大
+        const videoCount = session.recordings.length;
+        const totalSizeMB = session.recordings.reduce((sum, r) => sum + r.size_mb, 0).toFixed(2);
 
-        item.innerHTML = `
-            <div class="row align-items-center">
-                <div class="col-md-3">
-                    <div class="recording-thumbnail" style="height: 120px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center;">
-                        <i class="bi bi-play-circle-fill" style="font-size: 3rem; color: white;"></i>
-                    </div>
-                </div>
-                <div class="col-md-6 recording-info mt-3 mt-md-0">
-                    <h6>${recording.filename}</h6>
-                    <div class="recording-meta">
+        // 格式化日期和时间
+        const sessionDate = formatSessionDate(session.startTime);
+        const startTime = formatSessionTime(session.startTime);
+        const endTime = formatSessionTime(session.endTime);
+        const timeRange = session.startTime.getTime() === session.endTime.getTime()
+            ? startTime
+            : `${startTime} - ${endTime}`;
+
+        // 创建场次卡片
+        const sessionCard = document.createElement('div');
+        sessionCard.className = 'session-card';
+
+        const sessionId = `session-${index}`;
+
+        sessionCard.innerHTML = `
+            <div class="session-header" onclick="toggleSession('${sessionId}')">
+                <div class="session-info">
+                    <h5 class="session-title">
+                        <i class="bi bi-camera-video-fill me-2"></i>
+                        ${sessionDate} · 第 ${sessionNumber} 场
+                    </h5>
+                    <div class="session-meta">
                         <span class="me-3">
-                            <i class="bi bi-calendar3"></i>
-                            ${recording.date || '未知日期'}
+                            <i class="bi bi-clock"></i> ${timeRange}
                         </span>
-                        <span class="badge bg-info">
-                            <i class="bi bi-hdd"></i>
-                            ${recording.size_mb} MB
+                        <span class="me-3">
+                            <i class="bi bi-collection-play"></i> ${videoCount} 个视频
+                        </span>
+                        <span>
+                            <i class="bi bi-hdd"></i> ${totalSizeMB} MB
                         </span>
                     </div>
                 </div>
-                <div class="col-md-3 text-md-end mt-3 mt-md-0">
-                    <button class="btn btn-primary mb-2 w-100" onclick="playVideo('${recording.url}', '${recording.filename}')">
-                        <i class="bi bi-play-fill"></i> 在线观看
-                    </button>
-                    <a href="${recording.url}" download="${recording.filename}" class="btn btn-success w-100">
-                        <i class="bi bi-download"></i> 下载
-                    </a>
+                <div class="session-toggle">
+                    <i class="bi bi-chevron-down"></i>
                 </div>
+            </div>
+            <div id="${sessionId}" class="session-content">
+                <!-- 场次内的录播列表 -->
             </div>
         `;
 
-        container.appendChild(item);
+        container.appendChild(sessionCard);
+
+        // 渲染该场次的录播
+        const sessionContent = document.getElementById(sessionId);
+        session.recordings.forEach(recording => {
+            const recordingItem = createRecordingItem(recording);
+            sessionContent.appendChild(recordingItem);
+        });
     });
+}
+
+// 切换场次展开/折叠
+function toggleSession(sessionId) {
+    const content = document.getElementById(sessionId);
+    const header = content.previousElementSibling;
+    const icon = header.querySelector('.session-toggle i');
+
+    if (content.classList.contains('expanded')) {
+        content.classList.remove('expanded');
+        icon.classList.remove('bi-chevron-up');
+        icon.classList.add('bi-chevron-down');
+    } else {
+        content.classList.add('expanded');
+        icon.classList.remove('bi-chevron-down');
+        icon.classList.add('bi-chevron-up');
+    }
 }
 
 // 播放视频（内嵌模式）

@@ -346,6 +346,20 @@ body {
     .video-player-header h6 {
         font-size: 0.95rem;
     }
+
+    /* 场次卡片响应式 */
+    .session-header {
+        padding: 15px;
+    }
+
+    .session-title {
+        font-size: 1.1rem;
+    }
+
+    .session-meta span {
+        display: block;
+        margin-bottom: 5px;
+    }
 }
 
 /* 标签页样式 */
@@ -479,6 +493,84 @@ body {
 .recording-meta .badge {
     font-size: 0.85rem;
     padding: 5px 12px;
+}
+
+/* 场次卡片样式 */
+.session-card {
+    background: white;
+    border-radius: 15px;
+    margin-bottom: 20px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.session-card:hover {
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
+}
+
+.session-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 25px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.session-header:hover {
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+}
+
+.session-info {
+    flex: 1;
+}
+
+.session-title {
+    margin: 0 0 10px 0;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #667eea;
+}
+
+.session-meta {
+    font-size: 0.95rem;
+    color: #6c757d;
+}
+
+.session-meta span {
+    display: inline-block;
+}
+
+.session-toggle {
+    font-size: 1.5rem;
+    color: #667eea;
+    transition: transform 0.3s ease;
+}
+
+.session-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+    padding: 0 20px;
+}
+
+.session-content.expanded {
+    max-height: 10000px;
+    padding: 20px;
+}
+
+.session-content .recording-item {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border-left: 4px solid #667eea;
+}
+
+.session-content .recording-item:last-child {
+    margin-bottom: 0;
 }
 
 /* 动画效果 */

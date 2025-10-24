@@ -33,25 +33,43 @@ async def get_recordings():
                     filepath = os.path.join(RECORDINGS_DIR, filename)
                     stat = os.stat(filepath)
 
-                    # 解析文件名获取日期时间
-                    # 格式: SL_林木垚Meow_2025-10-08_15-02-38.mp4
+                    # 解析文件名获取真实录制时间
+                    # 格式1: SL_林木垚Meow_2025-10-08_15-02-38.mp4
+                    # 格式2: SL_林木垚Meow_2025-10-08_15-02-38_000.mp4（带序号）
                     try:
-                        parts = filename.replace('.mp4', '').replace('.ts', '').replace('.flv', '').split('_')
-                        if len(parts) >= 3:
-                            date_str = parts[-2]  # 2025-10-08
-                            time_str = parts[-1]  # 15-02-38
+                        # 移除扩展名
+                        name_without_ext = filename.replace('.mp4', '').replace('.ts', '').replace('.flv', '')
+                        parts = name_without_ext.split('_')
+
+                        # 找到日期和时间部分
+                        if len(parts) >= 4:
+                            # 倒数第二个或第三个是日期
+                            date_str = parts[-2] if not parts[-1].isdigit() else parts[-3]
+                            time_str = parts[-1] if not parts[-1].isdigit() else parts[-2]
+
+                            # 构造日期时间字符串
                             datetime_str = f"{date_str} {time_str.replace('-', ':')}"
+
+                            # 解析为datetime对象，用于场次分组
+                            try:
+                                recorded_time = datetime.strptime(datetime_str, "%Y-%m-%d %H:%M:%S")
+                                created_at = recorded_time.isoformat()
+                            except:
+                                # 解析失败，使用文件创建时间
+                                created_at = datetime.fromtimestamp(stat.st_ctime).isoformat()
                         else:
                             datetime_str = ""
+                            created_at = datetime.fromtimestamp(stat.st_ctime).isoformat()
                     except:
                         datetime_str = ""
+                        created_at = datetime.fromtimestamp(stat.st_ctime).isoformat()
 
                     recordings.append({
                         "filename": filename,
                         "url": f"/recordings/{filename}",
                         "size": stat.st_size,
                         "size_mb": round(stat.st_size / 1024 / 1024, 2),
-                        "created_at": datetime.fromtimestamp(stat.st_ctime).isoformat(),
+                        "created_at": created_at,  # 使用录制时间而非文件创建时间
                         "date": datetime_str
                     })
 
