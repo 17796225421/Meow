@@ -526,7 +526,7 @@ const saveCastToFile = function () {
 // 组件挂载后自动连接到指定房间
 onMounted(() => {
   // 设置房间号
-  roomNum.value = '832203909617';
+  roomNum.value = '498573413825';
 
   // 延迟1秒后自动连接，确保组件完全加载
   setTimeout(() => {
