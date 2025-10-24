@@ -527,9 +527,10 @@ function createDanmakuSection(danmakuFiles, sessionId) {
         </div>
         <div class="danmaku-files mb-2">
             ${danmakuFiles.map(f => `
-                <span class="badge bg-secondary me-2">
+                <a href="${f.url}" download="${f.filename}" class="badge bg-secondary me-2 text-decoration-none" style="cursor: pointer;" title="点击下载">
                     <i class="bi bi-file-earmark-text"></i> ${f.filename}
-                </span>
+                    <i class="bi bi-download ms-1" style="font-size: 0.8em;"></i>
+                </a>
             `).join('')}
         </div>
         <div id="${danmakuId}-container" style="display: none;">
@@ -684,13 +685,10 @@ function renderDanmakuList(danmakuId, danmakuList) {
         }
 
         return `
-            <div class="danmaku-item d-flex align-items-start mb-2 pb-2" data-type="${dataType}" style="border-bottom: 1px solid #f1f3f5;">
-                <div class="me-2" style="font-size: 1.2rem;">${icon}</div>
-                <div class="flex-grow-1">
-                    <div class="d-flex align-items-center mb-1">
-                        <strong style="color: ${typeColor};">${userName}</strong>
-                    </div>
-                    <div style="color: #495057; word-break: break-word;">${content}</div>
+            <div class="danmaku-item d-flex align-items-start mb-1 pb-1" data-type="${dataType}" style="border-bottom: 1px solid #f1f3f5;">
+                <div class="me-2" style="font-size: 1.1rem; line-height: 1.5;">${icon}</div>
+                <div class="flex-grow-1" style="line-height: 1.5;">
+                    <strong style="color: ${typeColor};">${userName}</strong><span style="color: #868e96; margin: 0 4px;">:</span><span style="color: #495057; word-break: break-word;">${content}</span>
                 </div>
             </div>
         `;
