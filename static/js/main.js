@@ -575,24 +575,21 @@ function createDanmakuSection(danmakuFiles, sessionId) {
     const danmakuId = `danmaku-${sessionId}`;
 
     section.innerHTML = `
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h6 class="mb-0">
+        <div class="mb-3">
+            <h6 class="mb-2">
                 <i class="bi bi-chat-dots-fill me-2" style="color: #667eea;"></i>
                 弹幕记录（${danmakuFiles.length} 个文件）
             </h6>
-            <button class="btn btn-sm btn-outline-primary" onclick="toggleDanmakuView('${danmakuId}', ${JSON.stringify(danmakuFiles.map(f => f.url)).replace(/"/g, '&quot;')})">
-                <i class="bi bi-eye-fill"></i> 查看弹幕
-            </button>
+            <div class="danmaku-files mb-2">
+                ${danmakuFiles.map(f => `
+                    <a href="${f.url}" download="${f.filename}" class="badge bg-secondary me-2 text-decoration-none" style="cursor: pointer;" title="点击下载">
+                        <i class="bi bi-file-earmark-text"></i> ${f.filename}
+                        <i class="bi bi-download ms-1" style="font-size: 0.8em;"></i>
+                    </a>
+                `).join('')}
+            </div>
         </div>
-        <div class="danmaku-files mb-2">
-            ${danmakuFiles.map(f => `
-                <a href="${f.url}" download="${f.filename}" class="badge bg-secondary me-2 text-decoration-none" style="cursor: pointer;" title="点击下载">
-                    <i class="bi bi-file-earmark-text"></i> ${f.filename}
-                    <i class="bi bi-download ms-1" style="font-size: 0.8em;"></i>
-                </a>
-            `).join('')}
-        </div>
-        <div id="${danmakuId}-container" style="display: none;">
+        <div id="${danmakuId}-container" style="display: block;">
             <!-- 弹幕类型筛选 -->
             <div class="danmaku-filters mb-3 p-2" style="background: white; border-radius: 4px; display: flex; gap: 10px; align-items: center;">
                 <span style="color: #868e96; font-size: 14px; font-weight: 500;">筛选：</span>
@@ -631,28 +628,11 @@ function createDanmakuSection(danmakuFiles, sessionId) {
         </div>
     `;
 
+    // 保存文件URL到section元素，后续自动加载
+    section.dataset.fileUrls = JSON.stringify(danmakuFiles.map(f => f.url));
+    section.dataset.danmakuId = danmakuId;
+
     return section;
-}
-
-// 切换弹幕显示
-async function toggleDanmakuView(danmakuId, fileUrls) {
-    const container = document.getElementById(`${danmakuId}-container`);
-
-    // 切换显示状态
-    if (container.style.display !== 'none') {
-        container.style.display = 'none';
-        return;
-    }
-
-    container.style.display = 'block';
-
-    // 如果已经加载过，直接显示
-    const content = document.getElementById(danmakuId);
-    if (content.dataset.loaded === 'true') {
-        return;
-    }
-
-    await loadDanmaku(danmakuId, fileUrls);
 }
 
 // 加载弹幕数据
@@ -909,6 +889,11 @@ function renderRecordings(data) {
         if (session.danmaku && session.danmaku.length > 0) {
             const danmakuSection = createDanmakuSection(session.danmaku, sessionId);
             sessionContent.appendChild(danmakuSection);
+
+            // 自动加载弹幕
+            const danmakuId = danmakuSection.dataset.danmakuId;
+            const fileUrls = JSON.parse(danmakuSection.dataset.fileUrls);
+            loadDanmaku(danmakuId, fileUrls);
         }
     });
 }
