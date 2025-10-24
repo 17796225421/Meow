@@ -348,7 +348,7 @@ async function checkServiceStatus() {
 // ========== 录播功能 ==========
 
 // 按时间间隔分组录播为场次
-function groupRecordingsBySessions(recordings) {
+function groupRecordingsBySessions(recordings, danmakuFiles = []) {
     // 间隔阈值：4小时 = 14400000 毫秒
     const SESSION_GAP_MS = 4 * 60 * 60 * 1000;
 
@@ -367,6 +367,7 @@ function groupRecordingsBySessions(recordings) {
             // 第一个录播，创建第一个场次
             currentSession = {
                 recordings: [recording],
+                danmaku: [],
                 startTime: recordingTime,
                 endTime: recordingTime
             };
@@ -379,6 +380,7 @@ function groupRecordingsBySessions(recordings) {
                 sessions.push(currentSession);
                 currentSession = {
                     recordings: [recording],
+                    danmaku: [],
                     startTime: recordingTime,
                     endTime: recordingTime
                 };
@@ -394,6 +396,22 @@ function groupRecordingsBySessions(recordings) {
     if (currentSession) {
         sessions.push(currentSession);
     }
+
+    // 将弹幕文件分配到对应的场次
+    danmakuFiles.forEach(danmaku => {
+        const danmakuTime = new Date(danmaku.created_at);
+
+        // 找到弹幕所属的场次（弹幕时间在场次的startTime和endTime + SESSION_GAP_MS范围内）
+        for (let session of sessions) {
+            const sessionStart = session.startTime.getTime();
+            const sessionEnd = session.endTime.getTime() + SESSION_GAP_MS;
+
+            if (danmakuTime.getTime() >= sessionStart && danmakuTime.getTime() <= sessionEnd) {
+                session.danmaku.push(danmaku);
+                break;
+            }
+        }
+    });
 
     // 场次倒序（最新的场次在前）
     return sessions.reverse();
@@ -489,11 +507,139 @@ function createRecordingItem(recording) {
     return item;
 }
 
+// 创建弹幕区域
+function createDanmakuSection(danmakuFiles, sessionId) {
+    const section = document.createElement('div');
+    section.className = 'danmaku-section mt-4 p-3' ;
+    section.style.cssText = 'background: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;';
+
+    const danmakuId = `danmaku-${sessionId}`;
+
+    section.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="mb-0">
+                <i class="bi bi-chat-dots-fill me-2" style="color: #667eea;"></i>
+                弹幕记录（${danmakuFiles.length} 个文件）
+            </h6>
+            <button class="btn btn-sm btn-outline-primary" onclick="loadDanmaku('${danmakuId}', ${JSON.stringify(danmakuFiles.map(f => f.url)).replace(/"/g, '&quot;')})">
+                <i class="bi bi-eye-fill"></i> 查看弹幕
+            </button>
+        </div>
+        <div class="danmaku-files mb-2">
+            ${danmakuFiles.map(f => `
+                <span class="badge bg-secondary me-2">
+                    <i class="bi bi-file-earmark-text"></i> ${f.filename}
+                </span>
+            `).join('')}
+        </div>
+        <div id="${danmakuId}" class="danmaku-content" style="display: none; max-height: 400px; overflow-y: auto; background: white; border-radius: 4px; padding: 12px;">
+            <div class="text-center text-muted">
+                <div class="spinner-border spinner-border-sm" role="status"></div>
+                <span class="ms-2">加载中...</span>
+            </div>
+        </div>
+    `;
+
+    return section;
+}
+
+// 加载并显示弹幕
+async function loadDanmaku(danmakuId, fileUrls) {
+    const container = document.getElementById(danmakuId);
+
+    // 切换显示状态
+    if (container.style.display !== 'none') {
+        container.style.display = 'none';
+        return;
+    }
+
+    container.style.display = 'block';
+
+    try {
+        // 加载所有弹幕文件
+        const allDanmaku = [];
+
+        for (const url of fileUrls) {
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (Array.isArray(data)) {
+                allDanmaku.push(...data);
+            }
+        }
+
+        // 按时间排序
+        allDanmaku.sort((a, b) => {
+            const timeA = a.timestamp || 0;
+            const timeB = b.timestamp || 0;
+            return timeA - timeB;
+        });
+
+        // 渲染弹幕
+        if (allDanmaku.length === 0) {
+            container.innerHTML = `
+                <div class="text-center text-muted py-3">
+                    <i class="bi bi-chat-dots"></i>
+                    <p class="mb-0 mt-2">暂无弹幕</p>
+                </div>
+            `;
+        } else {
+            container.innerHTML = allDanmaku.map(msg => {
+                const method = msg.method || '未知';
+                const content = msg.content || '';
+                const userName = msg.user?.name || msg.user?.nickname || '匿名';
+
+                // 根据类型显示不同的图标和颜色
+                let icon = '💬';
+                let typeColor = '#667eea';
+
+                if (method === 'gift' || method === 'GIFT') {
+                    icon = '🎁';
+                    typeColor = '#ff6b6b';
+                } else if (method === 'like' || method === 'LIKE') {
+                    icon = '❤️';
+                    typeColor = '#ff8787';
+                } else if (method === 'member' || method === 'MEMBER') {
+                    icon = '👋';
+                    typeColor = '#51cf66';
+                } else if (method === 'social' || method === 'SOCIAL') {
+                    icon = '⭐';
+                    typeColor = '#ffd43b';
+                }
+
+                return `
+                    <div class="danmaku-item d-flex align-items-start mb-2 pb-2" style="border-bottom: 1px solid #f1f3f5;">
+                        <div class="me-2" style="font-size: 1.2rem;">${icon}</div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center mb-1">
+                                <strong style="color: ${typeColor};">${userName}</strong>
+                            </div>
+                            <div style="color: #495057; word-break: break-word;">${content}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+    } catch (error) {
+        console.error('加载弹幕失败:', error);
+        container.innerHTML = `
+            <div class="text-center text-danger py-3">
+                <i class="bi bi-exclamation-triangle"></i>
+                <p class="mb-0 mt-2">加载弹幕失败</p>
+            </div>
+        `;
+    }
+}
+
 // 渲染录播列表（按场次分组）
-function renderRecordings(recordings) {
+function renderRecordings(data) {
     const container = document.getElementById('recordingsList');
 
-    if (recordings.length === 0) {
+    // 适配新的数据格式
+    const videos = data.videos || data;  // 兼容旧格式
+    const danmaku = data.danmaku || [];
+
+    if (videos.length === 0) {
         container.innerHTML = `
             <div class="text-center text-muted py-5">
                 <i class="bi bi-camera-video display-4"></i>
@@ -503,8 +649,8 @@ function renderRecordings(recordings) {
         return;
     }
 
-    // 按场次分组
-    const sessions = groupRecordingsBySessions(recordings);
+    // 按场次分组（传入视频和弹幕文件）
+    const sessions = groupRecordingsBySessions(videos, danmaku);
 
     container.innerHTML = '';
 
@@ -584,6 +730,12 @@ function renderRecordings(recordings) {
             const recordingItem = createRecordingItem(recording);
             sessionContent.appendChild(recordingItem);
         });
+
+        // 渲染该场次的弹幕
+        if (session.danmaku && session.danmaku.length > 0) {
+            const danmakuSection = createDanmakuSection(session.danmaku, sessionId);
+            sessionContent.appendChild(danmakuSection);
+        }
     });
 }
 
