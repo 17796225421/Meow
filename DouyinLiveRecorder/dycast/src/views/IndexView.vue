@@ -113,6 +113,8 @@ const castSet = new Set<string>();
 let castWs: DyCast | undefined;
 // 转发客户端
 let relayWs: RelayCast | undefined;
+// 连接开始时间
+let connectStartTime: Date | undefined;
 
 /**
  * 验证房间号
@@ -275,6 +277,8 @@ const connectLive = function () {
   try {
     // 清空上一次连接的消息
     clearMessageList();
+    // 记录连接开始时间
+    connectStartTime = new Date();
     CLog.debug('正在连接:', roomNum.value);
     SkMessage.info(`正在连接：${roomNum.value}`);
     const cast = new DyCast(roomNum.value);
@@ -296,6 +300,12 @@ const connectLive = function () {
       CLog.info(`DyCast 房间已关闭[${code}] => ${reason}`);
       connectStatus.value = 3;
       setRoomInputStatus(false);
+
+      // 自动保存弹幕
+      if (allCasts.length > 0) {
+        autoSaveCastToServer();
+      }
+
       switch (code) {
         case DyCastCloseCode.NORMAL:
           SkMessage.success('断开成功');
@@ -392,6 +402,54 @@ const relayCast = function () {
 /** 暂停转发 */
 const stopRelayCast = function () {
   if (relayWs) relayWs.close(1000);
+};
+
+/**
+ * 自动保存弹幕到服务器
+ */
+const autoSaveCastToServer = async function () {
+  try {
+    const len = allCasts.length;
+    if (len <= 0) {
+      CLog.info('没有弹幕需要保存');
+      return;
+    }
+
+    CLog.info(`正在自动保存弹幕，共 ${len} 条`);
+    addConsoleMessage(`正在保存弹幕 (${len}条)...`);
+
+    // 准备数据
+    const data = {
+      danmaku: allCasts,
+      startTime: connectStartTime?.toISOString(),
+      roomId: roomNum.value
+    };
+
+    // 发送到后端 API
+    const response = await fetch('http://localhost:5175/api/save-danmaku', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      CLog.info(`弹幕保存成功: ${result.filename}`);
+      addConsoleMessage(`弹幕已保存: ${result.filename} (${result.count}条)`);
+      SkMessage.success(`弹幕已保存: ${result.filename}`);
+    } else {
+      CLog.error('弹幕保存失败:', result.message);
+      addConsoleMessage(`弹幕保存失败: ${result.message}`);
+      SkMessage.error(`弹幕保存失败: ${result.message}`);
+    }
+  } catch (err) {
+    CLog.error('弹幕保存出错:', err);
+    addConsoleMessage('弹幕保存出错，请确保保存服务已启动');
+    SkMessage.error('弹幕保存出错，请检查保存服务');
+  }
 };
 
 /** 将弹幕保存到本地文件 */
