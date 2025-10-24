@@ -676,6 +676,8 @@ function renderDanmakuList(danmakuId, danmakuList) {
             icon = '⭐';
             typeColor = '#ffd43b';
             dataType = 'social';
+        } else if (method.includes('chat')) {
+            dataType = 'chat';
         }
 
         return `
@@ -721,12 +723,14 @@ function applyDanmakuFilters(danmakuId) {
 
     // 显示/隐藏弹幕项
     const danmakuItems = content.querySelectorAll('.danmaku-item');
+
     danmakuItems.forEach(item => {
         const itemType = item.dataset.type;
         if (activeFilters.includes(itemType)) {
-            item.style.display = 'flex';
+            item.style.display = '';  // 清除内联样式，使用类的样式
         } else {
-            item.style.display = 'none';
+            item.style.display = 'none';  // 强制隐藏
+            item.style.setProperty('display', 'none', 'important');  // 添加 !important
         }
     });
 }
