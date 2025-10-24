@@ -723,32 +723,41 @@ function renderDanmakuList(danmakuId, danmakuList) {
         let userNameColor = '#9079ad';  // dycast用户名颜色（紫色）
         let textColor = '#6b798e';      // dycast文本颜色（灰蓝色）
         let dataType = 'chat';
+        let displayContent = '';
 
         if (method.includes('gift')) {
             icon = '🎁';
             textColor = '#eba825';  // dycast礼物颜色（橙色）
             dataType = 'gift';
+
+            // 处理礼物消息
+            if (msg.gift) {
+                displayContent = `送出了<img src="${msg.gift.icon}" alt="${msg.gift.name}" style="width: 20px; height: 20px; vertical-align: middle; display: inline-block; margin: 0 2px;">× ${msg.gift.count}`;
+            } else {
+                displayContent = '送出了礼物';
+            }
         } else if (method.includes('like')) {
             icon = '❤️';
             dataType = 'like';
+            displayContent = parseContentWithEmoji(content);
         } else if (method.includes('member')) {
             icon = '👋';
             dataType = 'member';
+            displayContent = parseContentWithEmoji(content);
         } else if (method.includes('social')) {
             icon = '⭐';
             dataType = 'social';
-        } else if (method.includes('chat')) {
+            displayContent = parseContentWithEmoji(content);
+        } else {
             dataType = 'chat';
+            displayContent = parseContentWithEmoji(content);
         }
-
-        // 解析表情
-        const parsedContent = parseContentWithEmoji(content);
 
         return `
             <div class="danmaku-item d-flex align-items-start mb-1 pb-1" data-type="${dataType}" style="border-bottom: 1px solid #f1f3f5;">
                 <div class="me-2" style="font-size: 1rem; line-height: 1.4;">${icon}</div>
                 <div class="flex-grow-1" style="line-height: 1.4;">
-                    <strong style="color: ${userNameColor};">${userName}</strong><span style="color: #adb5bd; margin: 0 3px;">:</span><span style="color: ${textColor}; word-break: break-word;">${parsedContent}</span>
+                    <strong style="color: ${userNameColor};">${userName}</strong><span style="color: #adb5bd; margin: 0 3px;">:</span><span style="color: ${textColor}; word-break: break-word;">${displayContent}</span>
                 </div>
             </div>
         `;
