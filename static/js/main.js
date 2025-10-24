@@ -508,14 +508,34 @@ function renderRecordings(recordings) {
 
     container.innerHTML = '';
 
+    // 第一步：统计每个日期的场次总数
+    const dateCounts = {};
+    sessions.forEach(session => {
+        const dateStr = formatSessionDate(session.startTime);
+        dateCounts[dateStr] = (dateCounts[dateStr] || 0) + 1;
+    });
+
+    // 第二步：渲染场次，每天的场次编号从1开始
+    const dateIndices = {};
+
     sessions.forEach((session, index) => {
+        // 获取场次日期
+        const sessionDate = formatSessionDate(session.startTime);
+
+        // 初始化该日期的索引
+        if (!(sessionDate in dateIndices)) {
+            dateIndices[sessionDate] = 0;
+        }
+
+        // 计算当天的场次编号（倒序：最新的编号最大）
+        const sessionNumber = dateCounts[sessionDate] - dateIndices[sessionDate];
+        dateIndices[sessionDate]++;
+
         // 计算场次统计数据
-        const sessionNumber = sessions.length - index; // 倒序编号：最新场次编号最大
         const videoCount = session.recordings.length;
         const totalSizeMB = session.recordings.reduce((sum, r) => sum + r.size_mb, 0).toFixed(2);
 
-        // 格式化日期和时间
-        const sessionDate = formatSessionDate(session.startTime);
+        // 格式化时间
         const startTime = formatSessionTime(session.startTime);
         const endTime = formatSessionTime(session.endTime);
         const timeRange = session.startTime.getTime() === session.endTime.getTime()
