@@ -347,6 +347,65 @@ async function checkServiceStatus() {
 
 // ========== 录播功能 ==========
 
+// 常用表情映射表（参考dycast）
+const EMOJI_MAP = {
+    '[微笑]': 'https://p3-pc-sign.douyinpic.com/obj/tos-cn-i-tsj2vxp0zn/907e61eb04e54074a101b43035d50145?lk3s=343af0a2&x-expires=2073823200&x-signature=MjgLDdotxtB5mPt%2FcfoesgEyUrw%3D&from=876277922',
+    '[色]': 'https://p3-pc-sign.douyinpic.com/obj/tos-cn-i-tsj2vxp0zn/fba0f99d4b8049cd905bfd076d4efbf2?lk3s=343af0a2&x-expires=2073823200&x-signature=3ef4Yss%2Be9jSXCn%2Fx118CcmQslU%3D&from=876277922',
+    '[发呆]': 'https://p3-pc-sign.douyinpic.com/obj/tos-cn-i-tsj2vxp0zn/44ddc9a6bcd9471a858a33c382f6fafa?lk3s=343af0a2&x-expires=2073823200&x-signature=bt9X%2BdfdJZrEU2KqU1U203lKORI%3D&from=876277922',
+    '[酷拽]': 'https://p3-pc-sign.douyinpic.com/obj/tos-cn-i-tsj2vxp0zn/2609e5a35a3f436084bd618ef819227f?lk3s=343af0a2&x-expires=2073823200&x-signature=H6Su2ny4TRCAxPG6MhFvCQaRfhU%3D&from=876277922',
+    '[抠鼻]': 'https://p3-pc-sign.douyinpic.com/obj/tos-cn-i-tsj2vxp0zn/a90f7139a14140dbba575425193ca6c5?lk3s=343af0a2&x-expires=2073823200&x-signature=5hDfo4K3vTacDeNHpsE4wNxDzPA%3D&from=876277922',
+    '[流泪]': 'https://p3-pc-sign.douyinpic.com/obj/tos-cn-i-tsj2vxp0zn/7e606e0d73d843a2bc1c15219a1318cd?lk3s=343af0a2&x-expires=2073823200&x-signature=fN%2BpHdwjDDVGw3TVockkwcNgdpE%3D&from=876277922',
+    '[捂脸]': 'https://p3-pc-sign.douyinpic.com/obj/tos-cn-i-tsj2vxp0zn/3df5f3ca07e546b697b301ab9e2e3c23?lk3s=343af0a2&x-expires=2073823200&x-signature=0gV0VLOVdAPtDK578izTHNcMn3Q%3D&from=876277922',
+    '[发怒]': 'https://p3-pc-sign.douyinpic.com/obj/tos-cn-i-tsj2vxp0zn/476e92daceb14bee99e36b8f50a40e81?lk3s=343af0a2&x-expires=2073823200&x-signature=zUDm3e2ZrzyMsPOZESr4Gre2gEM%3D&from=876277922',
+    '[呲牙]': 'https://p3-pc-sign.douyinpic.com/obj/tos-cn-i-tsj2vxp0zn/86d772fc25a0404090613bad4a123947?lk3s=343af0a2&x-expires=2073823200&x-signature=tabxHYr%2BK1R5k9MxCjtwr0eXlY8%3D&from=876277922',
+    '[尬笑]': 'https://p3-pc-sign.douyinpic.com/obj/tos-cn-i-tsj2vxp0zn/a993e64d05cd428e876600a75129332f?lk3s=343af0a2&x-expires=2073823200&x-signature=%2F4ueoVAiEE7qyEJNpr0IlNuCF2M%3D&from=876277922',
+    '[害羞]': 'https://p3-pc-sign.douyinpic.com/obj/tos-cn-i-tsj2vxp0zn/ab54a06f377346f88f094fe6281103ff?lk3s=343af0a2&x-expires=2073823200&x-signature=S%2BrgTbBVnuQ50BSTRj3bK%2BRC8Sk%3D&from=876277922',
+    '[调皮]': 'https://p3-pc-sign.douyinpic.com/obj/tos-cn-i-tsj2vxp0zn/72045b3ac8654458a94767f463804c82?lk3s=343af0a2&x-expires=2073823200&x-signature=xpnqDsUvnAKuKHT1HKvDQIr8VP4%3D&from=876277922',
+    '[舔屏]': 'https://p3-pc-sign.douyinpic.com/obj/tos-cn-i-tsj2vxp0zn/cca02095fe5f448ea2289ece0e2ac49f?lk3s=343af0a2&x-expires=2073823200&x-signature=V6RMv0xuHUCx8gUnAXWmCdavdk4%3D&from=876277922',
+    '[看]': 'https://p3-pc-sign.douyinpic.com/obj/tos-cn-i-tsj2vxp0zn/cce25443e61846699d1f08782fb365bb?lk3s=343af0a2&x-expires=2073823200&x-signature=9CZVV1IIPHYkUlOsay7OtUH4Mh8%3D&from=876277922',
+    '[爱心]': 'https://p3-pc-sign.douyinpic.com/obj/tos-cn-i-tsj2vxp0zn/740e29f4ca6547ccb4f7cf3fe0463629?lk3s=343af0a2&x-expires=2073823200&x-signature=gT1cp0sAU8MK1tFaEJ8tdoyJZsU%3D&from=876277922',
+    '[比心]': 'https://p3-pc-sign.douyinpic.com/obj/tos-cn-i-tsj2vxp0zn/8a7a9fb41d444aa68dd5568ba72040aa?lk3s=343af0a2&x-expires=2073823200&x-signature=6kPwByXVEQSS0kKGnxd%2FGy7Q%2BaQ%3D&from=876277922',
+    '[赞]': 'https://p3-pc-sign.douyinpic.com/obj/tos-cn-i-tsj2vxp0zn/4c4a175aaf2b4e0c98b8d46684d64564?lk3s=343af0a2&x-expires=2073823200&x-signature=JoffJ8mqbHQy6nUe6l7%2FYYLsoFc%3D&from=876277922',
+    '[鼓掌]': 'https://p3-pc-sign.douyinpic.com/obj/tos-cn-i-tsj2vxp0zn/bd1068daba564862be71631451611ba7?lk3s=343af0a2&x-expires=2073823200&x-signature=Ipx0bBGc2ZKcu8yBCQXRm1kIb9A%3D&from=876277922',
+    '[感谢]': 'https://p3-pc-sign.douyinpic.com/obj/tos-cn-i-tsj2vxp0zn/478afb0911604f5289d9cbfd4183b404?lk3s=343af0a2&x-expires=2073823200&x-signature=Z38%2BaQoYNLP%2F1AwGigxR6ZXwVNk%3D&from=876277922',
+    '[抱抱你]': 'https://p3-pc-sign.douyinpic.com/obj/tos-cn-i-tsj2vxp0zn/8dcb4606e9f14613a3bbf98a1646e56f?lk3s=343af0a2&x-expires=2073823200&x-signature=HDGq5RUzLMBGMJHlizhwbTT2o8Q%3D&from=876277922',
+    '[玫瑰]': 'https://p3-pc-sign.douyinpic.com/obj/tos-cn-i-tsj2vxp0zn/06abb0913446422cbac6ab18ea8fa44a?lk3s=343af0a2&x-expires=2073823200&x-signature=gVzo1zT%2BPH8ujps5ouRCOPv6ivA%3D&from=876277922',
+    '[星星眼]': 'https://p3-pc-sign.douyinpic.com/obj/tos-cn-i-tsj2vxp0zn/66fb1287c3f04b4bbb427a1368d12a22?lk3s=343af0a2&x-expires=2073823200&x-signature=NQouKLW%2Bo5bpIqHN0QChk9HKO6g%3D&from=876277922',
+    '[黄脸干杯]': 'https://p3-pc-sign.douyinpic.com/obj/tos-cn-i-tsj2vxp0zn/e959a423dd0a43fd8fcd5dd0499928cf?lk3s=343af0a2&x-expires=2073823200&x-signature=Jtb%2FybbEDU54yPwaRPdSKZdWB9k%3D&from=876277922',
+    '[黄脸祈祷]': 'https://p3-pc-sign.douyinpic.com/obj/tos-cn-i-tsj2vxp0zn/bf6b3de54ab34732af82809635c704f8?lk3s=343af0a2&x-expires=2073823200&x-signature=%2FHzYhlLZc4KVG3OLT1WDXnEihj8%3D&from=876277922',
+    '[懵]': 'https://p3-pc-sign.douyinpic.com/obj/tos-cn-i-tsj2vxp0zn/bbcb745bbb1c463089a0d40177623c9e?lk3s=343af0a2&x-expires=2073823200&x-signature=LulDwZlJtII7QV7VLuPezFJgkBo%3D&from=876277922',
+    '[哭哭]': 'https://p3-pc-sign.douyinpic.com/obj/tos-cn-i-tsj2vxp0zn/df7b9c648eef4720962f604f1c81a77c?lk3s=343af0a2&x-expires=2073823200&x-signature=01cuEyEBFPcyWjxDQKUvjaq%2Bsp0%3D&from=876277922',
+    '[送花]': 'https://p3-pc-sign.douyinpic.com/obj/tos-cn-i-tsj2vxp0zn/f1d000c0d62a4d77b14641076a05f5b9?lk3s=343af0a2&x-expires=2073823200&x-signature=LNvbbRc%2BlTWMNB1o6U6PTqvjkVo%3D&from=876277922',
+    '[耶]': 'https://p3-pc-sign.douyinpic.com/obj/tos-cn-i-tsj2vxp0zn/167a2c32c7874da889fc902f8cf4500a?lk3s=343af0a2&x-expires=2073823200&x-signature=8G9vpxSGru7R5E1oeaB9oBDnnrY%3D&from=876277922',
+    '[打脸]': 'https://p3-pc-sign.douyinpic.com/obj/tos-cn-i-tsj2vxp0zn/91656d99d6d645a5995187454e3293f4?lk3s=343af0a2&x-expires=2073823200&x-signature=QxYr0l0hHysJgt6xC4nsV8aD5gc%3D&from=876277922',
+    '[大笑]': 'https://p3-pc-sign.douyinpic.com/obj/tos-cn-i-tsj2vxp0zn/e9078540aac945b4992ae19dbf4d0783?lk3s=343af0a2&x-expires=2073823200&x-signature=P%2BFMaF9E5roPh%2F42VgPOv63LebY%3D&from=876277922',
+    '[机智]': 'https://p3-pc-sign.douyinpic.com/obj/tos-cn-i-tsj2vxp0zn/3139a081129f4832a70da8d7808114fa?lk3s=343af0a2&x-expires=2073823200&x-signature=PKEjUtbE6KhpGfJqzCFuBpqVuBg%3D&from=876277922'
+};
+
+// 解析弹幕内容中的表情（参考dycast解析逻辑）
+function parseContentWithEmoji(content) {
+    if (!content) return '';
+
+    // 使用正则分割：文本和[表情]
+    const parts = content.split(/(\[.*?\])/);
+    let html = '';
+
+    for (let part of parts) {
+        if (!part) continue;
+
+        // 检查是否是表情
+        if (EMOJI_MAP[part]) {
+            // 渲染为图片
+            html += `<img src="${EMOJI_MAP[part]}" alt="${part}" style="width: 20px; height: 20px; vertical-align: middle; display: inline-block; margin: 0 1px;">`;
+        } else {
+            // 普通文本
+            html += part;
+        }
+    }
+
+    return html;
+}
+
 // 按时间间隔分组录播为场次
 function groupRecordingsBySessions(recordings, danmakuFiles = []) {
     // 间隔阈值：4小时 = 14400000 毫秒
@@ -659,36 +718,37 @@ function renderDanmakuList(danmakuId, danmakuList) {
         const content = msg.content || '';
         const userName = msg.user?.name || msg.user?.nickname || '匿名';
 
-        // 根据类型显示不同的图标和颜色
+        // 根据类型显示不同的图标和颜色（参考dycast配色）
         let icon = '💬';
-        let typeColor = '#667eea';
+        let userNameColor = '#9079ad';  // dycast用户名颜色（紫色）
+        let textColor = '#6b798e';      // dycast文本颜色（灰蓝色）
         let dataType = 'chat';
 
         if (method.includes('gift')) {
             icon = '🎁';
-            typeColor = '#ff6b6b';
+            textColor = '#eba825';  // dycast礼物颜色（橙色）
             dataType = 'gift';
         } else if (method.includes('like')) {
             icon = '❤️';
-            typeColor = '#ff8787';
             dataType = 'like';
         } else if (method.includes('member')) {
             icon = '👋';
-            typeColor = '#51cf66';
             dataType = 'member';
         } else if (method.includes('social')) {
             icon = '⭐';
-            typeColor = '#ffd43b';
             dataType = 'social';
         } else if (method.includes('chat')) {
             dataType = 'chat';
         }
 
+        // 解析表情
+        const parsedContent = parseContentWithEmoji(content);
+
         return `
             <div class="danmaku-item d-flex align-items-start mb-1 pb-1" data-type="${dataType}" style="border-bottom: 1px solid #f1f3f5;">
-                <div class="me-2" style="font-size: 1.1rem; line-height: 1.5;">${icon}</div>
-                <div class="flex-grow-1" style="line-height: 1.5;">
-                    <strong style="color: ${typeColor};">${userName}</strong><span style="color: #868e96; margin: 0 4px;">:</span><span style="color: #495057; word-break: break-word;">${content}</span>
+                <div class="me-2" style="font-size: 1rem; line-height: 1.4;">${icon}</div>
+                <div class="flex-grow-1" style="line-height: 1.4;">
+                    <strong style="color: ${userNameColor};">${userName}</strong><span style="color: #adb5bd; margin: 0 3px;">:</span><span style="color: ${textColor}; word-break: break-word;">${parsedContent}</span>
                 </div>
             </div>
         `;
