@@ -389,7 +389,7 @@ function parseContentWithEmoji(content) {
     // 检查是否是图片URL（支持常见图片格式）
     const imageUrlPattern = /^https?:\/\/.+\.(png|jpg|jpeg|gif|webp|bmp)(\?.*)?$/i;
     if (imageUrlPattern.test(content.trim())) {
-        return `<img src="${content.trim()}" alt="图片" style="max-width: 200px; max-height: 200px; vertical-align: middle; display: inline-block; margin: 2px; border-radius: 4px;">`;
+        return `<img src="${content.trim()}" alt="图片" style="max-width: 150px; max-height: 150px; vertical-align: middle; display: inline-block; margin: 2px; border-radius: 4px; object-fit: contain;">`;
     }
 
     // 使用正则分割：文本和[表情]
