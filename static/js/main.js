@@ -462,7 +462,7 @@ function groupRecordingsBySessions(recordings, danmakuFiles = []) {
 
         // 找到弹幕所属的场次（弹幕时间在场次的startTime和endTime + SESSION_GAP_MS范围内）
         for (let session of sessions) {
-            const sessionStart = session.startTime.getTime();
+            const sessionStart = session.startTime.getTime() - (60 * 60 * 1000); // 向前容差1小时
             const sessionEnd = session.endTime.getTime() + SESSION_GAP_MS;
 
             if (danmakuTime.getTime() >= sessionStart && danmakuTime.getTime() <= sessionEnd) {
