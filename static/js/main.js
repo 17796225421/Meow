@@ -386,6 +386,12 @@ const EMOJI_MAP = {
 function parseContentWithEmoji(content) {
     if (!content) return '';
 
+    // 检查是否是图片URL（支持常见图片格式）
+    const imageUrlPattern = /^https?:\/\/.+\.(png|jpg|jpeg|gif|webp|bmp)(\?.*)?$/i;
+    if (imageUrlPattern.test(content.trim())) {
+        return `<img src="${content.trim()}" alt="图片" style="max-width: 200px; max-height: 200px; vertical-align: middle; display: inline-block; margin: 2px; border-radius: 4px;">`;
+    }
+
     // 使用正则分割：文本和[表情]
     const parts = content.split(/(\[.*?\])/);
     let html = '';
@@ -400,6 +406,39 @@ function parseContentWithEmoji(content) {
         } else {
             // 普通文本
             html += part;
+        }
+    }
+
+    return html;
+}
+
+// 解析富文本内容（参考dycast的CastItem.vue）
+function parseRtfContent(rtfContent) {
+    if (!rtfContent || !Array.isArray(rtfContent)) return '';
+
+    let html = '';
+
+    for (let i = 0; i < rtfContent.length; i++) {
+        const item = rtfContent[i];
+
+        switch (item.type) {
+            case 1: // TEXT - 普通文本（可能包含[表情]）
+                html += parseContentWithEmoji(item.text || '');
+                break;
+
+            case 2: // EMOJI - 图片表情（来自imageValue）
+                if (item.url) {
+                    html += `<img src="${item.url}" alt="${item.text || '表情'}" style="width: 20px; height: 20px; vertical-align: middle; display: inline-block; margin: 0 1px;">`;
+                }
+                break;
+
+            case 3: // USER - @用户
+                html += `<span style="color: #e95464;">${item.text || ''}</span>`;
+                break;
+
+            default:
+                // 未知类型，当作文本处理
+                html += item.text || '';
         }
     }
 
@@ -745,8 +784,13 @@ function renderDanmakuList(danmakuId, danmakuList) {
             dataType = 'social';
             displayContent = parseContentWithEmoji(content);
         } else {
+            // 聊天消息：优先使用rtfContent，降级到content
             dataType = 'chat';
-            displayContent = parseContentWithEmoji(content);
+            if (msg.rtfContent && Array.isArray(msg.rtfContent)) {
+                displayContent = parseRtfContent(msg.rtfContent);
+            } else {
+                displayContent = parseContentWithEmoji(content);
+            }
         }
 
         return `
