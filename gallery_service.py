@@ -53,14 +53,47 @@ async def get_gallery_list(request: GalleryListRequest):
 @router.get("/image")
 async def get_image(path: str):
     """
-    代理获取图片内容
+    代理获取图片内容 - 使用Alist的get接口
     """
     try:
-        # 构造完整的图片 URL
-        image_url = f"{ALIST_BASE_URL}/d{path}"
+        # 先获取文件信息以获得sign
+        get_api_url = f"{ALIST_BASE_URL}/api/fs/get"
 
-        # 获取图片
-        response = requests.get(image_url, timeout=30, stream=True)
+        # 请求文件信息
+        info_response = requests.post(
+            get_api_url,
+            json={"path": path},
+            headers={"Content-Type": "application/json"},
+            timeout=10
+        )
+
+        if info_response.status_code != 200:
+            raise HTTPException(
+                status_code=info_response.status_code,
+                detail="获取文件信息失败"
+            )
+
+        info_data = info_response.json()
+
+        if info_data.get("code") != 200:
+            raise HTTPException(
+                status_code=500,
+                detail=f"获取文件信息失败: {info_data.get('message', '未知错误')}"
+            )
+
+        # 获取文件的raw_url
+        file_info = info_data.get("data", {})
+        raw_url = file_info.get("raw_url")
+        sign = file_info.get("sign", "")
+
+        if not raw_url:
+            # 如果没有raw_url，尝试构造URL
+            raw_url = f"{ALIST_BASE_URL}/d{path}"
+            if sign:
+                raw_url += f"?sign={sign}"
+
+        # 获取图片内容
+        response = requests.get(raw_url, timeout=30, stream=True)
 
         if response.status_code == 200:
             # 获取内容类型
@@ -78,7 +111,7 @@ async def get_image(path: str):
         else:
             raise HTTPException(
                 status_code=response.status_code,
-                detail="获取图片失败"
+                detail=f"获取图片失败: HTTP {response.status_code}"
             )
 
     except requests.exceptions.RequestException as e:
@@ -90,14 +123,47 @@ async def get_image(path: str):
 @router.get("/download")
 async def download_image(path: str):
     """
-    代理下载图片
+    代理下载图片 - 使用Alist的get接口
     """
     try:
-        # 构造完整的图片 URL
-        image_url = f"{ALIST_BASE_URL}/d{path}"
+        # 先获取文件信息以获得sign
+        get_api_url = f"{ALIST_BASE_URL}/api/fs/get"
 
-        # 获取图片
-        response = requests.get(image_url, timeout=30, stream=True)
+        # 请求文件信息
+        info_response = requests.post(
+            get_api_url,
+            json={"path": path},
+            headers={"Content-Type": "application/json"},
+            timeout=10
+        )
+
+        if info_response.status_code != 200:
+            raise HTTPException(
+                status_code=info_response.status_code,
+                detail="获取文件信息失败"
+            )
+
+        info_data = info_response.json()
+
+        if info_data.get("code") != 200:
+            raise HTTPException(
+                status_code=500,
+                detail=f"获取文件信息失败: {info_data.get('message', '未知错误')}"
+            )
+
+        # 获取文件的raw_url
+        file_info = info_data.get("data", {})
+        raw_url = file_info.get("raw_url")
+        sign = file_info.get("sign", "")
+
+        if not raw_url:
+            # 如果没有raw_url，尝试构造URL
+            raw_url = f"{ALIST_BASE_URL}/d{path}"
+            if sign:
+                raw_url += f"?sign={sign}"
+
+        # 获取图片内容
+        response = requests.get(raw_url, timeout=30, stream=True)
 
         if response.status_code == 200:
             # 获取文件名
@@ -118,7 +184,7 @@ async def download_image(path: str):
         else:
             raise HTTPException(
                 status_code=response.status_code,
-                detail="下载图片失败"
+                detail=f"下载图片失败: HTTP {response.status_code}"
             )
 
     except requests.exceptions.RequestException as e:
