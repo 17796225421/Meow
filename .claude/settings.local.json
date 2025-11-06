@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "WebSearch",
-      "Bash(powershell:*)"
+      "Bash(powershell:*)",
+      "WebFetch(domain:oss.asunny.art)"
     ],
     "deny": [],
     "ask": []

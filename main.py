@@ -17,6 +17,7 @@ import requests
 from tts_service import router as tts_router, get_outputs_dir
 from recording_service import router as recording_router, get_recordings_dir
 from friends_service import router as friends_router
+from gallery_service import router as gallery_router
 from emotion_config import MODEL_CONFIG, EMOTION_CONFIGS, GPT_SOVITS_DIR
 
 # 创建 FastAPI 应用
@@ -45,6 +46,7 @@ app.mount('/recordings', StaticFiles(directory=recordings_dir), name='recordings
 app.include_router(tts_router)
 app.include_router(recording_router)
 app.include_router(friends_router)
+app.include_router(gallery_router)
 
 # GPT-SoVITS API 进程
 gpt_sovits_process = None

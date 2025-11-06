@@ -43,6 +43,11 @@
                     <i class="bi bi-star-fill"></i> 好朋友
                 </button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link tab-button" id="gallery-tab" data-bs-toggle="pill" data-bs-target="#gallery-panel" type="button" role="tab" onclick="loadGallery()">
+                    <i class="bi bi-image-fill"></i> 画室
+                </button>
+            </li>
         </ul>
 
         <!-- 标签页内容 -->
@@ -290,6 +295,72 @@
                             </div>
                             <div id="historyContainer" class="history-container">
                                 <!-- 历史记录动态插入 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 画室标签页 -->
+            <div class="tab-pane fade" id="gallery-panel" role="tabpanel">
+                <div class="gallery-card">
+                    <div class="card shadow-lg">
+                        <div class="card-header bg-gradient-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="bi bi-image-fill"></i> 小垚的画室
+                                <span class="text-light small ms-2">(小垚的世界)</span>
+                                <button class="btn btn-sm btn-light float-end" onclick="loadGallery()">
+                                    <i class="bi bi-arrow-clockwise"></i> 刷新
+                                </button>
+                            </h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <!-- 加载提示 -->
+                            <div id="galleryLoading" class="text-center text-muted py-5" style="display: none;">
+                                <div class="spinner-border" role="status"></div>
+                                <p class="mt-3">正在加载图片...</p>
+                            </div>
+
+                            <!-- 图片瀑布流容器 -->
+                            <div id="galleryContainer" class="gallery-masonry">
+                                <!-- 图片将动态加载到这里 -->
+                            </div>
+
+                            <!-- 无图片提示 -->
+                            <div id="galleryEmpty" class="text-center text-muted py-5" style="display: none;">
+                                <i class="bi bi-image" style="font-size: 3rem; opacity: 0.3;"></i>
+                                <p class="mt-3">暂无图片</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 图片预览模态框 -->
+                <div id="imagePreviewModal" class="image-preview-modal" style="display: none;">
+                    <div class="modal-overlay" onclick="closeImagePreview()"></div>
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h6 id="imageTitle" class="mb-0">图片预览</h6>
+                            <div>
+                                <button class="btn btn-sm btn-light me-2" onclick="downloadCurrentImage()">
+                                    <i class="bi bi-download"></i> 下载
+                                </button>
+                                <button class="btn btn-sm btn-light" onclick="closeImagePreview()">
+                                    <i class="bi bi-x-lg"></i> 关闭
+                                </button>
+                            </div>
+                        </div>
+                        <div class="modal-body">
+                            <div class="image-container">
+                                <img id="previewImage" src="" alt="预览图片">
+                            </div>
+                            <div class="image-navigation">
+                                <button class="nav-btn prev-btn" onclick="navigateImage('prev')">
+                                    <i class="bi bi-chevron-left"></i>
+                                </button>
+                                <button class="nav-btn next-btn" onclick="navigateImage('next')">
+                                    <i class="bi bi-chevron-right"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
