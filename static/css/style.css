@@ -1117,6 +1117,161 @@ body {
    画室样式
    =========================== */
 
+/* =========================
+   画室功能样式 - 文件夹分组
+   ========================= */
+
+/* 文件夹分组展示样式 */
+.folder-section {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+    transition: all 0.3s ease;
+}
+
+.folder-section:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.folder-header {
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.folder-title {
+    color: #333;
+    font-size: 1.4rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+/* 预览图片网格 - 大图展示 */
+.folder-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.preview-item {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #f5f5f5;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.preview-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.preview-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.preview-item:hover .preview-image {
+    transform: scale(1.05);
+}
+
+.preview-item.placeholder {
+    background: #f8f9fa;
+    cursor: default;
+}
+
+.preview-item.placeholder:hover {
+    transform: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 展开后的所有图片网格 */
+.folder-all-images-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    padding-top: 1rem;
+    border-top: 2px solid #f0f0f0;
+}
+
+.all-images-item {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f5f5f5;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.all-images-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.all-images-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.all-images-item:hover .all-images-img {
+    transform: scale(1.05);
+}
+
+/* 响应式设计 - 文件夹视图 */
+@media (max-width: 1400px) {
+    .folder-preview-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    }
+}
+
+@media (max-width: 992px) {
+    .folder-preview-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    .folder-all-images-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+}
+
+@media (max-width: 576px) {
+    .folder-preview-grid {
+        grid-template-columns: 1fr;
+        gap: 0.8rem;
+    }
+
+    .folder-all-images-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+    }
+
+    .folder-section {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .folder-title {
+        font-size: 1.2rem;
+    }
+}
+
+/* =========================
+   画室功能样式 - 瀑布流（备用）
+   ========================= */
+
 /* 瀑布流容器 */
 .gallery-masonry {
     columns: 4 250px;

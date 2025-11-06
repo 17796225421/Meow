@@ -253,12 +253,35 @@ async def gallery_status():
 @router.get("/local-list")
 async def get_local_gallery_list():
     """
-    获取本地缓存的所有图片列表
+    获取本地缓存的所有图片列表（按文件夹分组）
     """
-    images = []
+    folders = {}
+    total_count = 0
 
-    # 递归遍历gallery目录
+    # 遍历gallery目录，按文件夹分组
     for root, dirs, files in os.walk(GALLERY_CACHE_DIR):
+        # 获取相对路径作为文件夹名
+        relative_root = Path(root).relative_to(GALLERY_CACHE_DIR)
+        folder_name = str(relative_root).replace('\\', '/')
+
+        # 跳过根目录的文件
+        if folder_name == '.':
+            continue
+
+        # 如果是子文件夹，获取顶级文件夹名
+        folder_parts = folder_name.split('/')
+        top_folder = folder_parts[0]
+
+        # 初始化文件夹数据
+        if top_folder not in folders:
+            folders[top_folder] = {
+                "name": top_folder,
+                "count": 0,
+                "preview_images": [],
+                "all_images": []
+            }
+
+        # 收集该文件夹中的图片
         for file in files:
             # 检查是否为图片文件
             if file.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp')):
@@ -268,19 +291,32 @@ async def get_local_gallery_list():
                 # 获取文件信息
                 stat = file_path.stat()
 
-                images.append({
+                image_info = {
                     "name": file,
                     "path": str(relative_path).replace('\\', '/'),
                     "size": stat.st_size,
                     "modified": datetime.fromtimestamp(stat.st_mtime).isoformat(),
                     "url": f"/static/gallery/{str(relative_path).replace(os.sep, '/')}",
                     "downloadUrl": f"/static/gallery/{str(relative_path).replace(os.sep, '/')}"
-                })
+                }
+
+                folders[top_folder]["all_images"].append(image_info)
+                folders[top_folder]["count"] += 1
+                total_count += 1
+
+                # 只取前4张作为预览
+                if len(folders[top_folder]["preview_images"]) < 4:
+                    folders[top_folder]["preview_images"].append(image_info["url"])
+
+    # 转换为列表并按文件夹名排序
+    folder_list = list(folders.values())
+    folder_list.sort(key=lambda x: x["name"])
 
     return {
         "status": "ok",
-        "count": len(images),
-        "images": images
+        "total_count": total_count,
+        "folder_count": len(folder_list),
+        "folders": folder_list
     }
 
 # 异步下载文件

@@ -1538,9 +1538,10 @@ function clearChatState() {
 // ===========================
 
 let galleryImages = [];  // 存储所有图片信息
+let galleryFolders = [];  // 存储文件夹分组数据
 let currentImageIndex = 0;  // 当前预览的图片索引
 
-// 主加载函数 - 简化版，从本地缓存加载
+// 主加载函数 - 文件夹分组版本
 async function loadGallery() {
     const container = document.getElementById('galleryContainer');
     const loading = document.getElementById('galleryLoading');
@@ -1555,23 +1556,29 @@ async function loadGallery() {
         // 触发后台同步（不等待）
         fetch('/api/gallery/sync', { method: 'POST' }).catch(() => {});
 
-        // 从本地缓存加载图片列表
+        // 从本地缓存加载文件夹分组数据
         const response = await fetch('/api/gallery/local-list');
         const data = await response.json();
 
         // 隐藏加载提示
         loading.style.display = 'none';
 
-        if (!data.images || data.images.length === 0) {
+        if (!data.folders || data.folders.length === 0) {
             empty.style.display = 'block';
             return;
         }
 
-        // 存储图片数据
-        galleryImages = data.images;
+        // 存储文件夹数据
+        galleryFolders = data.folders;
 
-        // 一次性渲染所有图片
-        renderGalleryImages();
+        // 构建扁平化的图片数组用于预览导航
+        galleryImages = [];
+        data.folders.forEach(folder => {
+            galleryImages.push(...folder.all_images);
+        });
+
+        // 渲染文件夹分组视图
+        renderGalleryFolders();
 
     } catch (error) {
         console.error('加载画室失败:', error);
@@ -1620,6 +1627,122 @@ function renderGalleryImages() {
         item.appendChild(info);
         container.appendChild(item);
     });
+}
+
+// 渲染文件夹分组视图
+function renderGalleryFolders() {
+    const container = document.getElementById('galleryContainer');
+    container.innerHTML = '';
+
+    galleryFolders.forEach((folder, folderIndex) => {
+        // 创建文件夹区块
+        const folderSection = document.createElement('div');
+        folderSection.className = 'folder-section mb-5';
+
+        // 文件夹标题栏
+        const folderHeader = document.createElement('div');
+        folderHeader.className = 'folder-header d-flex justify-content-between align-items-center mb-3';
+        folderHeader.innerHTML = `
+            <h4 class="folder-title">
+                <i class="bi bi-folder-fill text-warning me-2"></i>
+                ${folder.name}
+                <span class="badge bg-secondary ms-2">${folder.count} 张</span>
+            </h4>
+            ${folder.count > 4 ? `
+                <button class="btn btn-outline-primary btn-sm" onclick="expandFolder(${folderIndex})">
+                    <i class="bi bi-grid-3x3-gap"></i> 查看全部
+                </button>
+            ` : ''}
+        `;
+
+        // 预览图片网格
+        const previewGrid = document.createElement('div');
+        previewGrid.className = 'folder-preview-grid';
+
+        // 显示前4张预览图
+        const previewImages = folder.all_images.slice(0, 4);
+        previewImages.forEach(image => {
+            const previewItem = document.createElement('div');
+            previewItem.className = 'preview-item';
+
+            const img = document.createElement('img');
+            img.className = 'preview-image';
+            img.src = image.url;
+            img.alt = image.name;
+            img.title = image.name;
+            img.loading = 'lazy';
+
+            // 查找图片在全局数组中的索引
+            const globalIndex = galleryImages.findIndex(img => img.url === image.url);
+            img.onclick = () => openImagePreview(globalIndex);
+
+            previewItem.appendChild(img);
+            previewGrid.appendChild(previewItem);
+        });
+
+        // 如果少于4张图片，添加占位符保持布局
+        for (let i = previewImages.length; i < Math.min(4, folder.count); i++) {
+            const placeholder = document.createElement('div');
+            placeholder.className = 'preview-item placeholder';
+            previewGrid.appendChild(placeholder);
+        }
+
+        folderSection.appendChild(folderHeader);
+        folderSection.appendChild(previewGrid);
+
+        // 扩展内容区域（默认隐藏）
+        if (folder.count > 4) {
+            const expandedContent = document.createElement('div');
+            expandedContent.className = 'folder-expanded-content';
+            expandedContent.id = `folder-expanded-${folderIndex}`;
+            expandedContent.style.display = 'none';
+            folderSection.appendChild(expandedContent);
+        }
+
+        container.appendChild(folderSection);
+    });
+}
+
+// 展开文件夹显示所有图片
+function expandFolder(folderIndex) {
+    const folder = galleryFolders[folderIndex];
+    const expandedContent = document.getElementById(`folder-expanded-${folderIndex}`);
+    const button = event.target.closest('button');
+
+    if (expandedContent.style.display === 'none') {
+        // 渲染所有图片
+        expandedContent.innerHTML = '';
+        const allImagesGrid = document.createElement('div');
+        allImagesGrid.className = 'folder-all-images-grid mt-3';
+
+        // 从第5张开始显示（前4张已经在预览中）
+        folder.all_images.slice(4).forEach(image => {
+            const imageItem = document.createElement('div');
+            imageItem.className = 'all-images-item';
+
+            const img = document.createElement('img');
+            img.className = 'all-images-img';
+            img.src = image.url;
+            img.alt = image.name;
+            img.title = image.name;
+            img.loading = 'lazy';
+
+            // 查找图片在全局数组中的索引
+            const globalIndex = galleryImages.findIndex(img => img.url === image.url);
+            img.onclick = () => openImagePreview(globalIndex);
+
+            imageItem.appendChild(img);
+            allImagesGrid.appendChild(imageItem);
+        });
+
+        expandedContent.appendChild(allImagesGrid);
+        expandedContent.style.display = 'block';
+        button.innerHTML = '<i class="bi bi-chevron-up"></i> 收起';
+    } else {
+        // 收起
+        expandedContent.style.display = 'none';
+        button.innerHTML = '<i class="bi bi-grid-3x3-gap"></i> 查看全部';
+    }
 }
 
 // 打开图片预览
