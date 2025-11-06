@@ -1539,9 +1539,8 @@ function clearChatState() {
 
 let galleryImages = [];  // 存储所有图片信息
 let currentImageIndex = 0;  // 当前预览的图片索引
-let imageObserver = null;  // 懒加载观察器
 
-// 主加载函数
+// 主加载函数 - 简化版，从本地缓存加载
 async function loadGallery() {
     const container = document.getElementById('galleryContainer');
     const loading = document.getElementById('galleryLoading');
@@ -1553,260 +1552,36 @@ async function loadGallery() {
         container.innerHTML = '';
         empty.style.display = 'none';
 
-        // 重置图片数组
-        galleryImages = [];
+        // 触发后台同步（不等待）
+        fetch('/api/gallery/sync', { method: 'POST' }).catch(() => {});
 
-        // 使用渐进式加载
-        await fetchGalleryImagesProgressive('/asunny0/画栈/小垚的世界');
+        // 从本地缓存加载图片列表
+        const response = await fetch('/api/gallery/local-list');
+        const data = await response.json();
 
         // 隐藏加载提示
         loading.style.display = 'none';
 
-        if (galleryImages.length === 0) {
+        if (!data.images || data.images.length === 0) {
             empty.style.display = 'block';
+            return;
         }
+
+        // 存储图片数据
+        galleryImages = data.images;
+
+        // 一次性渲染所有图片
+        renderGalleryImages();
 
     } catch (error) {
         console.error('加载画室失败:', error);
         loading.style.display = 'none';
-        if (galleryImages.length === 0) {
-            empty.style.display = 'block';
-        }
+        empty.style.display = 'block';
         showToast('加载图片失败，请稍后重试', 'danger');
     }
 }
 
-// 渐进式加载图片（先显示找到的，再继续加载）
-async function fetchGalleryImagesProgressive(path, depth = 0) {
-    try {
-        const response = await fetch('/api/gallery/list', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ path })
-        });
-
-        if (!response.ok) {
-            throw new Error('获取图片列表失败');
-        }
-
-        const data = await response.json();
-
-        if (data.code !== 200) {
-            throw new Error(data.message || '获取图片列表失败');
-        }
-
-        const items = data.data.content || [];
-        const newImages = [];
-        const subFolders = [];
-
-        // 先处理图片文件
-        for (const item of items) {
-            if (!item.is_dir) {
-                // 如果是图片文件
-                const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
-                const fileName = item.name.toLowerCase();
-                const isImage = imageExtensions.some(ext => fileName.endsWith(ext));
-
-                if (isImage) {
-                    const imageData = {
-                        name: item.name,
-                        path: path + '/' + item.name,
-                        size: item.size,
-                        modified: item.modified,
-                        thumb: item.thumb || '',
-                        url: `/api/gallery/image?path=${encodeURIComponent(path + '/' + item.name)}`,
-                        downloadUrl: `/api/gallery/download?path=${encodeURIComponent(path + '/' + item.name)}`
-                    };
-                    newImages.push(imageData);
-                    galleryImages.push(imageData);
-                }
-            } else {
-                // 记录子文件夹
-                subFolders.push(item);
-            }
-        }
-
-        // 如果找到了新图片，立即渲染
-        if (newImages.length > 0) {
-            renderNewImages(newImages);
-
-            // 首次加载时隐藏加载提示
-            if (depth === 0 && galleryImages.length > 0) {
-                document.getElementById('galleryLoading').style.display = 'none';
-            }
-        }
-
-        // 异步处理子文件夹（不阻塞主流程）
-        if (subFolders.length > 0) {
-            // 使用Promise.all并发加载子文件夹
-            const promises = subFolders.map(folder => {
-                const subPath = path + '/' + folder.name;
-                return fetchGalleryImagesProgressive(subPath, depth + 1);
-            });
-
-            // 不等待，让它们在后台运行
-            Promise.all(promises).catch(error => {
-                console.error(`加载子文件夹失败:`, error);
-            });
-        }
-
-    } catch (error) {
-        console.error(`获取 ${path} 的图片失败:`, error);
-    }
-}
-
-// 渲染新找到的图片（增量渲染）
-function renderNewImages(newImages) {
-    const container = document.getElementById('galleryContainer');
-
-    // 为新图片创建元素
-    newImages.forEach((image, idx) => {
-        const index = galleryImages.indexOf(image);
-
-        const item = document.createElement('div');
-        item.className = 'gallery-item';
-
-        const imgWrapper = document.createElement('div');
-        imgWrapper.className = 'image-wrapper';
-
-        const img = document.createElement('img');
-        img.className = 'gallery-image lazy-load';
-        img.dataset.src = image.url;  // 实际图片URL
-        img.dataset.index = index;
-        img.alt = image.name;
-
-        // 先显示占位符
-        img.src = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiPgogIDxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNlZWUiLz4KICA8dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE4IiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+5Yqg6L295LitLi4uPC90ZXh0Pgo8L3N2Zz4=';
-
-        // 点击预览
-        img.onclick = () => openImagePreview(index);
-
-        // 图片信息
-        const info = document.createElement('div');
-        info.className = 'image-info';
-        info.innerHTML = `
-            <div class="image-name">${image.name}</div>
-            <div class="image-actions">
-                <button class="btn btn-sm btn-light" onclick="downloadImage(${index}); event.stopPropagation();">
-                    <i class="bi bi-download"></i>
-                </button>
-            </div>
-        `;
-
-        imgWrapper.appendChild(img);
-        item.appendChild(imgWrapper);
-        item.appendChild(info);
-        container.appendChild(item);
-    });
-
-    // 对新添加的图片初始化懒加载
-    initLazyLoadForNewImages();
-}
-
-// 为新添加的图片初始化懒加载
-function initLazyLoadForNewImages() {
-    // 如果还没有观察器，创建一个
-    if (!imageObserver) {
-        imageObserver = new IntersectionObserver((entries, observer) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const img = entry.target;
-                    const src = img.dataset.src;
-
-                    if (src) {
-                        // 加载图片
-                        const tempImg = new Image();
-                        tempImg.onload = () => {
-                            img.src = src;
-                            img.classList.add('loaded');
-                            img.classList.remove('lazy-load');
-                        };
-                        tempImg.onerror = () => {
-                            // 加载失败时显示默认图片
-                            img.src = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiPgogIDxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNmMDAiLz4KICA8dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE4IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+5Yqg6L295aSx6LSlPC90ZXh0Pgo8L3N2Zz4=';
-                            img.classList.remove('lazy-load');
-                        };
-                        tempImg.src = src;
-
-                        // 停止观察这个图片
-                        observer.unobserve(img);
-                    }
-                }
-            });
-        }, {
-            rootMargin: '50px'
-        });
-    }
-
-    // 观察所有新的懒加载图片
-    document.querySelectorAll('.lazy-load:not([data-observed])').forEach(img => {
-        img.dataset.observed = 'true';
-        imageObserver.observe(img);
-    });
-}
-
-// 递归获取所有图片（保留原函数以备需要）
-async function fetchGalleryImages(path) {
-    const images = [];
-
-    try {
-        const response = await fetch('/api/gallery/list', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ path })
-        });
-
-        if (!response.ok) {
-            throw new Error('获取图片列表失败');
-        }
-
-        const data = await response.json();
-
-        if (data.code !== 200) {
-            throw new Error(data.message || '获取图片列表失败');
-        }
-
-        const items = data.data.content || [];
-
-        // 处理每个项目
-        for (const item of items) {
-            if (item.is_dir) {
-                // 如果是文件夹，递归获取其中的图片
-                const subPath = path + '/' + item.name;
-                const subImages = await fetchGalleryImages(subPath);
-                images.push(...subImages);
-            } else {
-                // 如果是图片文件
-                const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
-                const fileName = item.name.toLowerCase();
-                const isImage = imageExtensions.some(ext => fileName.endsWith(ext));
-
-                if (isImage) {
-                    images.push({
-                        name: item.name,
-                        path: path + '/' + item.name,
-                        size: item.size,
-                        modified: item.modified,
-                        thumb: item.thumb || '',
-                        url: `/api/gallery/image?path=${encodeURIComponent(path + '/' + item.name)}`,
-                        downloadUrl: `/api/gallery/download?path=${encodeURIComponent(path + '/' + item.name)}`
-                    });
-                }
-            }
-        }
-
-    } catch (error) {
-        console.error(`获取 ${path} 的图片失败:`, error);
-    }
-
-    return images;
-}
-
-// 渲染图片瀑布流
+// 渲染图片瀑布流 - 简化版
 function renderGalleryImages() {
     const container = document.getElementById('galleryContainer');
 
@@ -1819,13 +1594,11 @@ function renderGalleryImages() {
         imgWrapper.className = 'image-wrapper';
 
         const img = document.createElement('img');
-        img.className = 'gallery-image lazy-load';
-        img.dataset.src = image.url;  // 实际图片URL
+        img.className = 'gallery-image';
+        img.src = image.url;  // 直接使用本地URL
         img.dataset.index = index;
         img.alt = image.name;
-
-        // 先显示占位符
-        img.src = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiPgogIDxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNlZWUiLz4KICA8dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE4IiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+5Yqg6L295LitLi4uPC90ZXh0Pgo8L3N2Zz4=';
+        img.loading = 'lazy';  // 使用浏览器原生懒加载
 
         // 点击预览
         img.onclick = () => openImagePreview(index);
@@ -1846,53 +1619,6 @@ function renderGalleryImages() {
         item.appendChild(imgWrapper);
         item.appendChild(info);
         container.appendChild(item);
-    });
-
-    // 初始化懒加载
-    initLazyLoad();
-}
-
-// 初始化懒加载
-function initLazyLoad() {
-    // 如果已经有观察器，先断开
-    if (imageObserver) {
-        imageObserver.disconnect();
-    }
-
-    // 创建 Intersection Observer
-    imageObserver = new IntersectionObserver((entries, observer) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const img = entry.target;
-                const src = img.dataset.src;
-
-                if (src) {
-                    // 加载图片
-                    const tempImg = new Image();
-                    tempImg.onload = () => {
-                        img.src = src;
-                        img.classList.add('loaded');
-                        img.classList.remove('lazy-load');
-                    };
-                    tempImg.onerror = () => {
-                        // 加载失败时显示默认图片
-                        img.src = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPHN2ZyB2ZXJzaW9uPSIxLjEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjQwMCIgaGVpZ2h0PSIzMDAiPgogIDxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNmMDAiLz4KICA8dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE4IiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+5Yqg6L295aSx6LSlPC90ZXh0Pgo8L3N2Zz4=';
-                        img.classList.remove('lazy-load');
-                    };
-                    tempImg.src = src;
-
-                    // 停止观察这个图片
-                    observer.unobserve(img);
-                }
-            }
-        });
-    }, {
-        rootMargin: '50px'
-    });
-
-    // 开始观察所有懒加载图片
-    document.querySelectorAll('.lazy-load').forEach(img => {
-        imageObserver.observe(img);
     });
 }
 

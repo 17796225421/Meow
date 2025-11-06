@@ -73,3 +73,5 @@ RVC1006Nvidia/assets/hubert/
 RVC1006Nvidia/assets/uvr5_weights/
 RVC1006Nvidia/__pycache__/
 RVC1006Nvidia/*.exe
+
+static/gallery/

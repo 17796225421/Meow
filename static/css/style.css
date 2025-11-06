@@ -1154,15 +1154,7 @@ body {
     height: auto;
     display: block;
     cursor: pointer;
-    transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-.gallery-image.lazy-load {
-    opacity: 0.5;
-}
-
-.gallery-image.loaded {
-    opacity: 1;
+    transition: transform 0.3s ease;
 }
 
 .gallery-item:hover .gallery-image {
