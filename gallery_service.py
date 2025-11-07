@@ -20,7 +20,7 @@ from datetime import datetime
 router = APIRouter(prefix="/api/gallery", tags=["gallery"])
 
 # Alist OSS 配置
-ALIST_BASE_URL = "https://oss.asunny.art"
+ALIST_BASE_URL = "http://8.135.33.2"
 ALIST_API_URL = f"{ALIST_BASE_URL}/api/fs/list"
 
 # 本地缓存目录
