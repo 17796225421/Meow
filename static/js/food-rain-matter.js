@@ -266,11 +266,6 @@ class FoodRainMatterSystem {
             this._hasLoggedFoodCount = true;
         }
 
-        // 测试：画大号emoji
-        context.font = '60px Arial';
-        context.fillStyle = '#FF0000';
-        context.fillText('🍎 TEST', 100, 100);
-
         // 遍历所有美食刚体并绘制emoji
         for (const foodItem of this.foodBodies) {
             const body = foodItem.body;
