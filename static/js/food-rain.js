@@ -47,8 +47,8 @@ class FoodRainSystem {
     init() {
         this.createCanvas();
 
-        // 计算地面位置（屏幕底部附近）
-        this.groundY = this.canvas.height - 20;
+        // 计算地面位置（屏幕最底部）
+        this.groundY = this.canvas.height;
 
         // 调整移动端参数
         if (this.config.reduceOnMobile && window.innerWidth < 768) {
@@ -414,7 +414,7 @@ class FoodRainSystem {
     handleResize() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
-        this.groundY = this.canvas.height - 20;
+        this.groundY = this.canvas.height;
 
         // 清理超出屏幕的堆叠美食
         this.stackedFoods = this.stackedFoods.filter(food =>
