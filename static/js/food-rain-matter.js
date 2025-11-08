@@ -226,7 +226,8 @@ class FoodRainMatterSystem {
             const shouldSpawn = this.needImmediateSpawn ||
                                (currentTime - this.lastSpawnTime > this.spawnInterval);
 
-            if (shouldSpawn && this.foodBodies.length < this.config.maxFoodCount) {
+            if (shouldSpawn) {
+                // 持续生成食物，不限制数量（autoCleanup会自动删除超出的）
                 const x = Math.random() * window.innerWidth;
                 const y = -50;
                 this.createFoodBody(x, y);
@@ -234,14 +235,14 @@ class FoodRainMatterSystem {
                 this.needImmediateSpawn = false;  // 重置立即生成标记
             }
 
-            // 清理和高度控制
+            // 清理和高度控制（FIFO删除超出maxFoodCount的部分）
             this.autoCleanup();
 
             requestAnimationFrame(spawn);
         };
 
         requestAnimationFrame(spawn);
-        console.log(`美食生成循环已启动 - 最大${this.config.maxFoodCount}个，每秒${this.config.spawnRate}个`);
+        console.log(`美食生成循环已启动 - 每秒${this.config.spawnRate}个，最大保持${this.config.maxFoodCount}个（FIFO）`);
     }
 
     startRenderLoop() {
@@ -310,12 +311,21 @@ class FoodRainMatterSystem {
         });
 
         // 限制总数量 - FIFO队列方式，删除最早创建的
+        let deletedCount = 0;
         while (this.foodBodies.length > this.config.maxFoodCount) {
             const oldestFood = this.foodBodies[0];  // 第一个是最早的
             if (oldestFood) {
                 this.World.remove(this.world, oldestFood.body);
                 this.foodBodies.shift();  // 从头部删除
+                deletedCount++;
             }
+        }
+
+        // 调试：打印删除信息
+        if (deletedCount > 0 && !this._hasLoggedDelete) {
+            console.log(`🗑️ FIFO删除: 删除了${deletedCount}个最早的食物，当前总数: ${this.foodBodies.length}`);
+            this._hasLoggedDelete = true;
+            setTimeout(() => { this._hasLoggedDelete = false; }, 5000);  // 5秒后允许再次打印
         }
     }
 
