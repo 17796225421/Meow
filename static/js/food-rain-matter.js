@@ -4,9 +4,9 @@ class FoodRainMatterSystem {
     constructor(options = {}) {
         // 配置参数
         this.config = {
-            maxFallingFoods: options.maxFallingFoods || 50,
-            maxStackedFoods: options.maxStackedFoods || 80,
-            maxLayers: options.maxLayers || 3,
+            maxFallingFoods: options.maxFallingFoods || 15,  // 减少同时飘落数量
+            maxStackedFoods: options.maxStackedFoods || 40,   // 减少最大堆叠数
+            maxLayers: options.maxLayers || 2,                // 只允许2层
             minSize: options.minSize || 20,
             maxSize: options.maxSize || 30,
             foodTypes: [
@@ -35,7 +35,7 @@ class FoodRainMatterSystem {
         this.world = null;
         this.foodBodies = [];  // 存储所有美食刚体及其emoji
         this.lastSpawnTime = 0;
-        this.spawnInterval = 400;
+        this.spawnInterval = 800;  // 降低生成频率（更慢）
         this.groundY = 0;
 
         this.init();
@@ -93,8 +93,8 @@ class FoodRainMatterSystem {
         // 添加鼠标控制（用于点击移除）
         this.setupMouseControl();
 
-        // 预生成初始堆叠美食
-        this.preGenerateStackedFoods(35);
+        // 预生成初始堆叠美食（减少到20个）
+        this.preGenerateStackedFoods(20);
 
         // 启动引擎（使用Runner）
         this.runner = this.Runner.create();
@@ -410,9 +410,9 @@ class FoodRainMatterSystem {
 document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         window.foodRainMatter = new FoodRainMatterSystem({
-            maxFallingFoods: 50,
-            maxStackedFoods: 80,
-            maxLayers: 3
+            maxFallingFoods: 15,
+            maxStackedFoods: 40,
+            maxLayers: 2
         });
         console.log('🍎 Matter.js 美食堆叠雨特效已启动 - 点击美食可消除！');
     }, 800);
