@@ -177,6 +177,25 @@ async def shutdown_event():
         gpt_sovits_process.wait()
         print("✅ 服务已关闭")
 
+@app.get("/api/ball-images")
+async def get_ball_images():
+    """获取水晶球图片列表"""
+    ball_dir = os.path.join(static_dir, 'ball')
+    image_files = []
+
+    if os.path.exists(ball_dir):
+        # 支持的图片格式
+        supported_formats = ('.png', '.jpg', '.jpeg', '.gif', '.webp')
+
+        for filename in os.listdir(ball_dir):
+            if filename.lower().endswith(supported_formats):
+                # 返回相对于static的路径
+                image_files.append(f'/static/ball/{filename}')
+
+        print(f"🔮 水晶球图片列表: 找到 {len(image_files)} 张图片")
+
+    return {"images": image_files}
+
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request, response: Response):
     """主页面"""

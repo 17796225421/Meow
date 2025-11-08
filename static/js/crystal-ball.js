@@ -78,35 +78,46 @@ class CrystalBallSnow {
         this.animate();
     }
 
-    loadCenterImages() {
-        // 获取static/ball文件夹下的所有图片
-        const imageFiles = [
-            '/static/ball/水星 (1).png',
-            '/static/ball/水星 (3).jpg'
-        ];
+    async loadCenterImages() {
+        // 从API自动获取static/ball文件夹下的所有图片
+        try {
+            const response = await fetch('/api/ball-images');
+            const data = await response.json();
+            const imageFiles = data.images;
 
-        let loadedCount = 0;
+            if (!imageFiles || imageFiles.length === 0) {
+                console.warn('⚠️ static/ball 文件夹中没有找到图片');
+                return;
+            }
 
-        imageFiles.forEach((src, index) => {
-            const img = new Image();
-            img.onload = () => {
-                loadedCount++;
-                console.log(`图片加载完成: ${src}`);
-                if (loadedCount === imageFiles.length) {
-                    this.imagesLoaded = true;
-                    console.log('所有水晶球中央图片加载完成');
-                }
-            };
-            img.onerror = () => {
-                console.error(`图片加载失败: ${src}`);
-                loadedCount++;
-            };
-            img.src = src;
-            this.centerImages.push(img);
-        });
+            console.log(`🔮 从API获取到 ${imageFiles.length} 张水晶球图片`);
 
-        // 随机选择初始图片
-        this.currentImageIndex = Math.floor(Math.random() * imageFiles.length);
+            let loadedCount = 0;
+
+            imageFiles.forEach((src, index) => {
+                const img = new Image();
+                img.onload = () => {
+                    loadedCount++;
+                    console.log(`图片加载完成 (${loadedCount}/${imageFiles.length}): ${src}`);
+                    if (loadedCount === imageFiles.length) {
+                        this.imagesLoaded = true;
+                        console.log('✅ 所有水晶球中央图片加载完成');
+                    }
+                };
+                img.onerror = () => {
+                    console.error(`❌ 图片加载失败: ${src}`);
+                    loadedCount++;
+                };
+                img.src = src;
+                this.centerImages.push(img);
+            });
+
+            // 随机选择初始图片
+            this.currentImageIndex = Math.floor(Math.random() * imageFiles.length);
+
+        } catch (error) {
+            console.error('❌ 获取水晶球图片列表失败:', error);
+        }
     }
 
     createSnowflakes() {
