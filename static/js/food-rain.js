@@ -47,8 +47,8 @@ class FoodRainSystem {
     init() {
         this.createCanvas();
 
-        // 计算地面位置（美食条上方）
-        this.groundY = this.canvas.height - 80;
+        // 计算地面位置（屏幕底部附近）
+        this.groundY = this.canvas.height - 20;
 
         // 调整移动端参数
         if (this.config.reduceOnMobile && window.innerWidth < 768) {
@@ -57,8 +57,9 @@ class FoodRainSystem {
             this.spawnInterval = 1200;
         }
 
-        // 添加点击事件
-        this.canvas.addEventListener('click', (e) => this.handleClick(e));
+
+        // 预生成初始堆叠美食
+        this.preGenerateStackedFoods(35);
 
         // 开始动画
         this.animate();
@@ -76,8 +77,8 @@ class FoodRainSystem {
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 2;
-            cursor: pointer;
+            z-index: 100;
+            pointer-events: none;
         `;
 
         this.canvas.width = window.innerWidth;
@@ -85,6 +86,9 @@ class FoodRainSystem {
         this.ctx = this.canvas.getContext('2d');
 
         document.body.insertBefore(this.canvas, document.body.firstChild);
+
+        // 在document上监听点击，这样不会阻止其他元素的点击
+        document.addEventListener('click', (e) => this.handleDocumentClick(e), true);
     }
 
     createFood(isStacked = false) {
@@ -144,6 +148,7 @@ class FoodRainSystem {
         food.speedY = 0;
         food.speedX = 0;
         food.rotationSpeed = 0;
+        food.opacity = 0.9;  // 半透明，不完全遮挡内容
 
         // 轻微弹跳效果
         food.scale = 1.2;
@@ -180,6 +185,41 @@ class FoodRainSystem {
             // 移除最底层
             const bottomFoods = this.getBottomLayerFoods();
             bottomFoods.forEach(food => this.removeFood(food));
+        }
+    }
+
+    preGenerateStackedFoods(count) {
+        // 预生成初始堆叠美食
+        const screenWidth = this.canvas.width;
+        const foodSize = (this.config.minSize + this.config.maxSize) / 2;
+
+        // 计算每行可以放多少个美食
+        const foodsPerRow = Math.floor(screenWidth / (foodSize * 1.5));
+        const rows = Math.ceil(count / foodsPerRow);
+
+        let generatedCount = 0;
+
+        for (let row = 0; row < rows && generatedCount < count; row++) {
+            const foodsInThisRow = Math.min(foodsPerRow, count - generatedCount);
+            const startX = (screenWidth - foodsInThisRow * foodSize * 1.5) / 2;
+
+            for (let i = 0; i < foodsInThisRow; i++) {
+                const food = this.createFood(true);
+
+                // 设置位置：底部向上堆叠
+                food.x = startX + i * foodSize * 1.5 + this.randomRange(-5, 5);
+                food.y = this.groundY - (row * foodSize * 0.9) - food.size / 2;
+
+                // 设置为堆叠状态
+                food.state = FoodState.STACKED;
+                food.speedY = 0;
+                food.speedX = 0;
+                food.rotationSpeed = 0;
+                food.opacity = 0.9;  // 半透明，不完全遮挡内容
+
+                this.stackedFoods.push(food);
+                generatedCount++;
+            }
         }
     }
 
@@ -233,22 +273,36 @@ class FoodRainSystem {
         food.removeProgress = 0;
     }
 
-    handleClick(e) {
+    handleDocumentClick(e) {
+        // 只处理底部堆叠美食区域的点击
+        const clickY = e.clientY;
+        const stackedAreaY = this.groundY;
+
+        // 如果点击的不是堆叠美食区域，直接返回让点击穿透
+        if (clickY < stackedAreaY) {
+            return;
+        }
+
+        // 计算Canvas坐标
         const rect = this.canvas.getBoundingClientRect();
-        const clickX = (e.clientX - rect.left) * (this.canvas.width / rect.width);
-        const clickY = (e.clientY - rect.top) * (this.canvas.height / rect.height);
+        const canvasX = (e.clientX - rect.left) * (this.canvas.width / rect.width);
+        const canvasY = (e.clientY - rect.top) * (this.canvas.height / rect.height);
 
         // 检查是否点击到堆叠的美食
+        let clickedFood = false;
         for (let i = this.stackedFoods.length - 1; i >= 0; i--) {
             const food = this.stackedFoods[i];
             if (food.state === FoodState.REMOVING) continue;
 
-            const dx = clickX - food.x;
-            const dy = clickY - food.y;
+            const dx = canvasX - food.x;
+            const dy = canvasY - food.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
 
             if (distance < food.size / 2) {
                 this.removeFood(food);
+                clickedFood = true;
+                e.stopPropagation();  // 阻止事件继续传播
+                e.preventDefault();   // 阻止默认行为
                 break;
             }
         }
@@ -360,7 +414,7 @@ class FoodRainSystem {
     handleResize() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
-        this.groundY = this.canvas.height - 80;
+        this.groundY = this.canvas.height - 20;
 
         // 清理超出屏幕的堆叠美食
         this.stackedFoods = this.stackedFoods.filter(food =>
