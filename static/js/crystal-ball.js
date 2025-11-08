@@ -111,9 +111,9 @@ class CrystalBallSnow {
         flake.rotation += flake.rotationSpeed;
 
         // 球形边界检测和重置
-        const dx = flake.x - this.centerX;
-        const dy = flake.y - this.centerY;
-        const distanceSquared = dx * dx + dy * dy;
+        let dx = flake.x - this.centerX;
+        let dy = flake.y - this.centerY;
+        let distanceSquared = dx * dx + dy * dy;
 
         // 如果超出球体或到达底部
         if (distanceSquared > this.ballRadius * this.ballRadius || flake.y > this.centerY + this.ballRadius) {
@@ -123,9 +123,9 @@ class CrystalBallSnow {
             do {
                 newX = this.centerX + (Math.random() - 0.5) * this.ballRadius * 1.5;
                 newY = topY;
-                const testDx = newX - this.centerX;
-                const testDy = newY - this.centerY;
-                distanceSquared = testDx * testDx + testDy * testDy;
+                dx = newX - this.centerX;
+                dy = newY - this.centerY;
+                distanceSquared = dx * dx + dy * dy;
             } while (distanceSquared > this.ballRadius * this.ballRadius);
 
             flake.x = newX;
