@@ -338,7 +338,7 @@ async function checkServiceStatus() {
         const result = await response.json();
 
         if (result.success && !result.data.api_online) {
-            showToast('语音服务正在启动中，请稍候...', 'warning');
+            // showToast('语音服务正在启动中，请稍候...', 'warning');
         }
     } catch (error) {
         console.error('检查服务状态失败:', error);
