@@ -99,8 +99,8 @@ class FoodRainMatterSystem {
         // 添加鼠标控制（用于点击移除）
         this.setupMouseControl();
 
-        // 预生成初始美食（90个）
-        this.preGenerateStackedFoods(90);
+        // 预生成初始美食（30个）
+        this.preGenerateStackedFoods(30);
 
         // 启动引擎（使用Runner）
         this.runner = this.Runner.create();
@@ -429,10 +429,10 @@ class FoodRainMatterSystem {
 document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         window.foodRainMatter = new FoodRainMatterSystem({
-            maxFoodCount: 100,   // 屏幕内最大100个食物
-            spawnRate: 2         // 每秒生成2个食物
+            maxFoodCount: 50,    // 屏幕内最大50个食物
+            spawnRate: 1         // 每秒生成1个食物
         });
         console.log('🍎 Matter.js 美食堆叠雨特效已启动');
-        console.log('📊 配置: 最大100个食物，每秒生成2个，点击消除立即补充');
+        console.log('📊 配置: 最大50个食物，每秒生成1个，点击消除立即补充');
     }, 800);
 });
