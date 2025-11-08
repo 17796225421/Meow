@@ -23,6 +23,14 @@ class CrystalBallSnow {
         this.mouseX = 0;
         this.mouseY = 0;
         this.isHovered = false;
+
+        // 中央旋转图片
+        this.centerImages = [];
+        this.currentImageIndex = 0;
+        this.rotation = 0;
+        this.rotationSpeed = 0.01; // 旋转速度（弧度/帧）
+        this.lastRotationCheck = 0;
+        this.imagesLoaded = false;
     }
 
     init() {
@@ -54,6 +62,9 @@ class CrystalBallSnow {
         // 初始化雪花
         this.createSnowflakes();
 
+        // 加载中央图片
+        this.loadCenterImages();
+
         // 绑定事件
         this.container.addEventListener('mouseenter', () => this.isHovered = true);
         this.container.addEventListener('mouseleave', () => this.isHovered = false);
@@ -65,6 +76,37 @@ class CrystalBallSnow {
 
         // 开始动画
         this.animate();
+    }
+
+    loadCenterImages() {
+        // 获取static/ball文件夹下的所有图片
+        const imageFiles = [
+            '/static/ball/水星 (1).png',
+            '/static/ball/水星 (3).jpg'
+        ];
+
+        let loadedCount = 0;
+
+        imageFiles.forEach((src, index) => {
+            const img = new Image();
+            img.onload = () => {
+                loadedCount++;
+                console.log(`图片加载完成: ${src}`);
+                if (loadedCount === imageFiles.length) {
+                    this.imagesLoaded = true;
+                    console.log('所有水晶球中央图片加载完成');
+                }
+            };
+            img.onerror = () => {
+                console.error(`图片加载失败: ${src}`);
+                loadedCount++;
+            };
+            img.src = src;
+            this.centerImages.push(img);
+        });
+
+        // 随机选择初始图片
+        this.currentImageIndex = Math.floor(Math.random() * imageFiles.length);
     }
 
     createSnowflakes() {
@@ -178,6 +220,23 @@ class CrystalBallSnow {
         // 清空画布
         this.ctx.clearRect(0, 0, 180, 170);
 
+        // 绘制中央旋转图片（在雪花之前，这样雪花在前面）
+        this.drawCenterImage();
+
+        // 更新旋转角度
+        this.rotation += this.rotationSpeed;
+
+        // 检查是否旋转了180度（π弧度）
+        if (Math.floor(this.rotation / Math.PI) > this.lastRotationCheck) {
+            this.lastRotationCheck = Math.floor(this.rotation / Math.PI);
+            // 随机切换图片
+            const oldIndex = this.currentImageIndex;
+            do {
+                this.currentImageIndex = Math.floor(Math.random() * this.centerImages.length);
+            } while (this.currentImageIndex === oldIndex && this.centerImages.length > 1);
+            console.log(`💫 水晶球图片切换: ${this.currentImageIndex + 1}`);
+        }
+
         // 按深度排序（远的先画）
         this.snowflakes.sort((a, b) => a.z - b.z);
 
@@ -188,6 +247,52 @@ class CrystalBallSnow {
         });
 
         this.animationId = requestAnimationFrame(() => this.animate());
+    }
+
+    drawCenterImage() {
+        if (!this.imagesLoaded || this.centerImages.length === 0) {
+            return;
+        }
+
+        const img = this.centerImages[this.currentImageIndex];
+        if (!img || !img.complete) {
+            return;
+        }
+
+        this.ctx.save();
+
+        // 移动到球心
+        this.ctx.translate(this.centerX, this.centerY);
+
+        // 旋转
+        this.ctx.rotate(this.rotation);
+
+        // 计算图片大小（适应球体，留出边距）
+        const maxSize = this.ballRadius * 1.2; // 稍微比球体小一点
+        const imgAspect = img.width / img.height;
+        let drawWidth, drawHeight;
+
+        if (imgAspect > 1) {
+            // 宽图
+            drawWidth = maxSize;
+            drawHeight = maxSize / imgAspect;
+        } else {
+            // 高图或方图
+            drawHeight = maxSize;
+            drawWidth = maxSize * imgAspect;
+        }
+
+        // 绘制图片（居中）
+        this.ctx.globalAlpha = 0.7; // 稍微透明，让后面的雪花可见
+        this.ctx.drawImage(
+            img,
+            -drawWidth / 2,
+            -drawHeight / 2,
+            drawWidth,
+            drawHeight
+        );
+
+        this.ctx.restore();
     }
 
     destroy() {
