@@ -70,17 +70,18 @@ class FoodRainMatterSystem {
 
         console.log('创建自定义Canvas:', this.canvas.width, 'x', this.canvas.height);
 
-        // 计算地面位置
+        // 计算地面位置（屏幕底部）
         this.groundY = window.innerHeight;
 
-        // 创建不可见的地面
+        // 创建不可见的地面（放在屏幕底部）
         const ground = this.Bodies.rectangle(
             window.innerWidth / 2,
-            this.groundY + 25,
-            window.innerWidth,
+            this.groundY - 10,  // 地面在屏幕底部往上10px，确保在屏幕内
+            window.innerWidth * 2,  // 加宽地面防止边缘漏掉
             50,
             {
                 isStatic: true,
+                label: 'ground',
                 render: {
                     fillStyle: 'transparent',
                     strokeStyle: 'transparent'
@@ -89,6 +90,7 @@ class FoodRainMatterSystem {
         );
 
         this.World.add(this.world, ground);
+        console.log('地面创建在 Y:', this.groundY - 10, '窗口高度:', window.innerHeight);
 
         // 添加鼠标控制（用于点击移除）
         this.setupMouseControl();
@@ -151,10 +153,11 @@ class FoodRainMatterSystem {
 
         const body = this.Bodies.circle(x, y, radius, {
             restitution: 0.2,  // 低弹性
-            friction: 0.5,
-            density: 0.001,    // 轻盈
+            friction: 0.8,     // 增加摩擦力，更容易堆叠
+            frictionStatic: 1.0,
+            density: 0.002,    // 稍微增加密度，更稳定
             render: {
-                fillStyle: 'transparent',  // 不显示默认渲染
+                fillStyle: 'transparent',
                 strokeStyle: 'transparent'
             }
         });
@@ -192,6 +195,7 @@ class FoodRainMatterSystem {
         const rows = Math.ceil(count / foodsPerRow);
 
         console.log(`预生成 ${count} 个堆叠美食，每行 ${foodsPerRow} 个，共 ${rows} 行`);
+        console.log(`地面位置 groundY: ${this.groundY}`);
 
         for (let row = 0; row < rows; row++) {
             const foodsInThisRow = Math.min(foodsPerRow, count - row * foodsPerRow);
@@ -199,14 +203,15 @@ class FoodRainMatterSystem {
 
             for (let i = 0; i < foodsInThisRow && this.foodBodies.length < count; i++) {
                 const x = startX + i * spacing + this.randomRange(-5, 5);
-                const y = this.groundY - 30 - row * avgSize * 0.9;
+                // 确保美食在地面上方，地面是 groundY - 10
+                const y = this.groundY - 35 - row * avgSize;
                 const emoji = this.config.foodTypes[Math.floor(Math.random() * this.config.foodTypes.length)];
 
                 this.createFoodBody(x, y, emoji, { x: 0, y: 0 });
             }
         }
 
-        console.log(`实际生成了 ${this.foodBodies.length} 个美食`);
+        console.log(`实际生成了 ${this.foodBodies.length} 个美食，位置范围: Y=${this.groundY - 35} 到 Y=${this.groundY - 35 - rows * avgSize}`);
     }
 
     startSpawning() {
@@ -214,7 +219,8 @@ class FoodRainMatterSystem {
             const currentTime = Date.now();
 
             if (currentTime - this.lastSpawnTime > this.spawnInterval) {
-                if (this.foodBodies.length < this.config.maxFallingFoods) {
+                // 只限制总数量，不限制飘落数量
+                if (this.foodBodies.length < this.config.maxStackedFoods) {
                     const x = Math.random() * window.innerWidth;
                     const y = -50;
                     this.createFoodBody(x, y);
@@ -229,6 +235,7 @@ class FoodRainMatterSystem {
         };
 
         requestAnimationFrame(spawn);
+        console.log('美食生成循环已启动');
     }
 
     startRenderLoop() {
@@ -380,11 +387,11 @@ class FoodRainMatterSystem {
 
         // 更新地面位置
         const bodies = Matter.Composite.allBodies(this.world);
-        const ground = bodies.find(body => body.isStatic);
+        const ground = bodies.find(body => body.isStatic && body.label === 'ground');
         if (ground) {
             this.Body.setPosition(ground, {
                 x: window.innerWidth / 2,
-                y: this.groundY + 25
+                y: this.groundY - 10
             });
         }
     }
