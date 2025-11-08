@@ -21,6 +21,7 @@ class FoodRainMatterSystem {
         // Matter.js 核心模块
         this.Engine = Matter.Engine;
         this.Render = Matter.Render;
+        this.Runner = Matter.Runner;
         this.World = Matter.World;
         this.Bodies = Matter.Bodies;
         this.Events = Matter.Events;
@@ -51,21 +52,11 @@ class FoodRainMatterSystem {
 
         this.world = this.engine.world;
 
-        // 创建渲染器
-        this.render = this.Render.create({
-            element: document.body,
-            engine: this.engine,
-            options: {
-                width: window.innerWidth,
-                height: window.innerHeight,
-                wireframes: false,
-                background: 'transparent',
-                pixelRatio: window.devicePixelRatio || 1
-            }
-        });
-
-        // 设置canvas样式 - pointer-events: none 让点击穿透到下方元素
-        this.render.canvas.style.cssText = `
+        // 不使用Matter.js的Render，自己创建canvas
+        this.canvas = document.createElement('canvas');
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+        this.canvas.style.cssText = `
             position: fixed;
             top: 0;
             left: 0;
@@ -74,6 +65,10 @@ class FoodRainMatterSystem {
             z-index: 100;
             pointer-events: none;
         `;
+        document.body.insertBefore(this.canvas, document.body.firstChild);
+        this.ctx = this.canvas.getContext('2d');
+
+        console.log('创建自定义Canvas:', this.canvas.width, 'x', this.canvas.height);
 
         // 计算地面位置
         this.groundY = window.innerHeight;
@@ -98,17 +93,15 @@ class FoodRainMatterSystem {
         // 添加鼠标控制（用于点击移除）
         this.setupMouseControl();
 
-        // 添加afterRender事件来绘制emoji
-        this.Events.on(this.render, 'afterRender', () => {
-            this.renderEmojis();
-        });
-
         // 预生成初始堆叠美食
         this.preGenerateStackedFoods(35);
 
-        // 启动引擎和渲染
-        this.Engine.run(this.engine);
-        this.Render.run(this.render);
+        // 启动引擎（使用Runner）
+        this.runner = this.Runner.create();
+        this.Runner.run(this.runner, this.engine);
+
+        // 启动自定义渲染循环
+        this.startRenderLoop();
 
         // 启动生成循环
         this.startSpawning();
@@ -238,14 +231,38 @@ class FoodRainMatterSystem {
         requestAnimationFrame(spawn);
     }
 
-    renderEmojis() {
-        const context = this.render.context;
+    startRenderLoop() {
+        const render = () => {
+            // 清空canvas
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        // 调试：打印美食数量（只打印一次）
+            // 绘制所有美食
+            this.renderEmojis();
+
+            requestAnimationFrame(render);
+        };
+
+        requestAnimationFrame(render);
+        console.log('自定义渲染循环已启动');
+    }
+
+    renderEmojis() {
+        const context = this.ctx;
+
+        // 调试：打印美食数量和第一个美食的位置
         if (!this._hasLoggedFoodCount && this.foodBodies.length > 0) {
             console.log(`正在渲染 ${this.foodBodies.length} 个美食`);
+            const first = this.foodBodies[0];
+            console.log(`第一个美食位置: x=${first.body.position.x.toFixed(0)}, y=${first.body.position.y.toFixed(0)}, emoji=${first.emoji}, size=${first.size}`);
+            console.log(`Canvas尺寸: ${this.canvas.width} x ${this.canvas.height}`);
+
             this._hasLoggedFoodCount = true;
         }
+
+        // 测试：画大号emoji
+        context.font = '60px Arial';
+        context.fillStyle = '#FF0000';
+        context.fillText('🍎 TEST', 100, 100);
 
         // 遍历所有美食刚体并绘制emoji
         for (const foodItem of this.foodBodies) {
@@ -261,9 +278,9 @@ class FoodRainMatterSystem {
 
             // 设置字体和样式
             context.font = `${size}px Arial`;
+            context.fillStyle = '#000000';
             context.textAlign = 'center';
             context.textBaseline = 'middle';
-            context.globalAlpha = 0.9;
 
             // 绘制emoji
             context.fillText(emoji, 0, 0);
@@ -356,12 +373,9 @@ class FoodRainMatterSystem {
     }
 
     handleResize() {
-        // 更新渲染器大小
-        this.render.canvas.width = window.innerWidth;
-        this.render.canvas.height = window.innerHeight;
-        this.render.options.width = window.innerWidth;
-        this.render.options.height = window.innerHeight;
-
+        // 更新canvas大小
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
         this.groundY = window.innerHeight;
 
         // 更新地面位置
@@ -376,9 +390,12 @@ class FoodRainMatterSystem {
     }
 
     destroy() {
-        if (this.render) {
-            this.Render.stop(this.render);
-            this.render.canvas.remove();
+        if (this.canvas) {
+            this.canvas.remove();
+        }
+
+        if (this.runner) {
+            this.Runner.stop(this.runner);
         }
 
         if (this.engine) {
