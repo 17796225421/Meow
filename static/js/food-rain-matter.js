@@ -6,7 +6,6 @@ class FoodRainMatterSystem {
         this.config = {
             maxFoodCount: options.maxFoodCount || 100,  // 屏幕内最大食物数量
             spawnRate: options.spawnRate || 2,          // 每秒生成2个食物
-            maxLayers: options.maxLayers || 3,          // 最大堆叠层数
             minSize: options.minSize || 20,
             maxSize: options.maxSize || 30,
             foodTypes: [
@@ -310,69 +309,14 @@ class FoodRainMatterSystem {
             return true;
         });
 
-        // 检查堆叠层数
-        const maxHeight = this.calculateMaxHeight();
-        const layerHeight = 30;
-        const layers = Math.ceil(maxHeight / layerHeight);
-
-        if (layers > this.config.maxLayers) {
-            // 移除最底层的美食
-            this.removeBottomLayer();
-        }
-
         // 限制总数量 - FIFO队列方式，删除最早创建的
-        if (this.foodBodies.length > this.config.maxFoodCount) {
-            const removeCount = this.foodBodies.length - this.config.maxFoodCount;
-
-            // 删除最早创建的（数组前面的）
-            for (let i = 0; i < removeCount; i++) {
-                const oldestFood = this.foodBodies[0];  // 第一个是最早的
-                if (oldestFood) {
-                    this.World.remove(this.world, oldestFood.body);
-                    this.foodBodies.shift();  // 从头部删除
-                }
+        while (this.foodBodies.length > this.config.maxFoodCount) {
+            const oldestFood = this.foodBodies[0];  // 第一个是最早的
+            if (oldestFood) {
+                this.World.remove(this.world, oldestFood.body);
+                this.foodBodies.shift();  // 从头部删除
             }
         }
-    }
-
-    calculateMaxHeight() {
-        let maxHeight = 0;
-        for (const foodItem of this.foodBodies) {
-            const height = this.groundY - foodItem.body.position.y;
-            if (height > maxHeight) {
-                maxHeight = height;
-            }
-        }
-        return maxHeight;
-    }
-
-    removeBottomLayer() {
-        const layerHeight = 35;
-        const bottomFoods = this.foodBodies.filter(foodItem =>
-            foodItem.body.position.y >= this.groundY - layerHeight
-        );
-
-        for (const foodItem of bottomFoods) {
-            this.World.remove(this.world, foodItem.body);
-            const index = this.foodBodies.indexOf(foodItem);
-            if (index > -1) {
-                this.foodBodies.splice(index, 1);
-            }
-        }
-    }
-
-    findBottomFood() {
-        let bottomFood = null;
-        let maxY = -Infinity;
-
-        for (const foodItem of this.foodBodies) {
-            if (foodItem.body.position.y > maxY) {
-                maxY = foodItem.body.position.y;
-                bottomFood = foodItem;
-            }
-        }
-
-        return bottomFood;
     }
 
     randomRange(min, max) {
@@ -418,8 +362,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         window.foodRainMatter = new FoodRainMatterSystem({
             maxFoodCount: 100,   // 屏幕内最大100个食物
-            spawnRate: 2,        // 每秒生成2个食物
-            maxLayers: 3         // 最大堆叠3层
+            spawnRate: 2         // 每秒生成2个食物
         });
         console.log('🍎 Matter.js 美食堆叠雨特效已启动');
         console.log('📊 配置: 最大100个食物，每秒生成2个，点击消除立即补充');
