@@ -1924,3 +1924,187 @@ a:hover {
     border-radius: 10px;
     padding: 6px 12px;
 }
+
+
+/* =========================
+   唯美雪景水晶球
+   ========================= */
+
+/* 水晶球容器 - 固定在右下角 */
+.crystal-ball-container {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 180px;
+    height: 220px;
+    z-index: 9997;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.crystal-ball-container:hover {
+    transform: scale(1.05);
+}
+
+/* 玻璃球体 */
+.crystal-ball-glass {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 180px;
+    height: 170px;
+    border-radius: 50% 50% 45% 45%;
+    background: radial-gradient(
+        circle at 30% 30%,
+        rgba(255, 255, 255, 0.9) 0%,
+        rgba(255, 255, 255, 0.6) 20%,
+        rgba(255, 240, 245, 0.4) 50%,
+        rgba(255, 182, 193, 0.3) 80%,
+        rgba(255, 182, 193, 0.2) 100%
+    );
+    backdrop-filter: blur(3px);
+    border: 3px solid rgba(255, 255, 255, 0.6);
+    box-shadow:
+        inset -10px -10px 30px rgba(255, 182, 193, 0.3),
+        inset 10px 10px 30px rgba(255, 255, 255, 0.5),
+        0 10px 40px rgba(255, 183, 213, 0.4),
+        0 0 60px rgba(255, 183, 213, 0.3);
+    overflow: hidden;
+    animation: ballGlow 3s ease-in-out infinite;
+}
+
+/* 玻璃球高光 */
+.crystal-ball-glass::before {
+    content: '';
+    position: absolute;
+    top: 15px;
+    left: 30px;
+    width: 50px;
+    height: 50px;
+    background: radial-gradient(
+        circle,
+        rgba(255, 255, 255, 0.9) 0%,
+        rgba(255, 255, 255, 0.4) 50%,
+        transparent 100%
+    );
+    border-radius: 50%;
+    filter: blur(5px);
+}
+
+/* 玻璃球次高光 */
+.crystal-ball-glass::after {
+    content: '';
+    position: absolute;
+    top: 40px;
+    right: 25px;
+    width: 30px;
+    height: 30px;
+    background: radial-gradient(
+        circle,
+        rgba(255, 255, 255, 0.6) 0%,
+        rgba(255, 255, 255, 0.2) 50%,
+        transparent 100%
+    );
+    border-radius: 50%;
+    filter: blur(3px);
+}
+
+/* Canvas画布 - 雪花在这里绘制 */
+#crystalBallCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 180px;
+    height: 170px;
+    border-radius: 50% 50% 45% 45%;
+    pointer-events: none;
+}
+
+/* 水晶球底座 */
+.crystal-ball-base {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 130px;
+    height: 55px;
+    background: linear-gradient(
+        135deg,
+        #f5e6d3 0%,
+        #e8d4b8 25%,
+        #d4af7a 50%,
+        #c9a166 75%,
+        #f0dfc8 100%
+    );
+    border-radius: 0 0 50% 50% / 0 0 100% 100%;
+    box-shadow:
+        0 5px 15px rgba(0, 0, 0, 0.2),
+        inset 0 -3px 10px rgba(0, 0, 0, 0.1),
+        inset 0 3px 10px rgba(255, 255, 255, 0.5);
+}
+
+/* 底座装饰纹理 */
+.crystal-ball-base::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 3px;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(212, 175, 122, 0.5) 20%,
+        rgba(212, 175, 122, 0.8) 50%,
+        rgba(212, 175, 122, 0.5) 80%,
+        transparent 100%
+    );
+    border-radius: 50%;
+}
+
+/* 底座边缘高光 */
+.crystal-ball-base::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 8px;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.3) 50%,
+        transparent 100%
+    );
+    border-radius: 50%;
+}
+
+/* 呼吸发光动画 */
+@keyframes ballGlow {
+    0%, 100% {
+        box-shadow:
+            inset -10px -10px 30px rgba(255, 182, 193, 0.3),
+            inset 10px 10px 30px rgba(255, 255, 255, 0.5),
+            0 10px 40px rgba(255, 183, 213, 0.4),
+            0 0 60px rgba(255, 183, 213, 0.3);
+    }
+    50% {
+        box-shadow:
+            inset -10px -10px 30px rgba(255, 182, 193, 0.4),
+            inset 10px 10px 30px rgba(255, 255, 255, 0.6),
+            0 10px 40px rgba(255, 183, 213, 0.6),
+            0 0 80px rgba(255, 183, 213, 0.5);
+    }
+}
+
+/* 悬停时增强发光 */
+.crystal-ball-container:hover .crystal-ball-glass {
+    box-shadow:
+        inset -10px -10px 30px rgba(255, 182, 193, 0.4),
+        inset 10px 10px 30px rgba(255, 255, 255, 0.6),
+        0 15px 50px rgba(255, 183, 213, 0.7),
+        0 0 100px rgba(255, 183, 213, 0.6);
+    animation: none;
+}
