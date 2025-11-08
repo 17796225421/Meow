@@ -264,8 +264,9 @@ class CrystalBallSnow {
         // 移动到球心
         this.ctx.translate(this.centerX, this.centerY);
 
-        // 旋转
-        this.ctx.rotate(this.rotation);
+        // 计算横向旋转的缩放比例（模拟3D透视）
+        // cos(rotation) 会让图片在旋转到侧面时变窄，模拟3D效果
+        const scaleX = Math.cos(this.rotation);
 
         // 计算图片大小（适应球体，留出边距）
         const maxSize = this.ballRadius * 1.2; // 稍微比球体小一点
@@ -282,8 +283,14 @@ class CrystalBallSnow {
             drawWidth = maxSize * imgAspect;
         }
 
+        // 应用横向缩放（模拟绕Y轴旋转）
+        this.ctx.scale(scaleX, 1);
+
+        // 根据旋转角度调整透明度（侧面时更透明）
+        const alpha = 0.5 + Math.abs(scaleX) * 0.3; // 0.5-0.8之间
+        this.ctx.globalAlpha = alpha;
+
         // 绘制图片（居中）
-        this.ctx.globalAlpha = 0.7; // 稍微透明，让后面的雪花可见
         this.ctx.drawImage(
             img,
             -drawWidth / 2,
