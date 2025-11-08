@@ -1835,10 +1835,10 @@ function toggleSettingsPanel() {
 function toggleFoodRain() {
     const toggle = document.getElementById('foodRainToggle');
     const isEnabled = toggle.checked;
-    
+
     // 保存到localStorage
     localStorage.setItem('foodRainEnabled', isEnabled);
-    
+
     if (window.foodRainMatter) {
         if (isEnabled) {
             // 显示美食雨canvas
@@ -1852,6 +1852,34 @@ function toggleFoodRain() {
                 window.foodRainMatter.canvas.style.display = 'none';
             }
             console.log('❌ 美食雨已关闭');
+        }
+    }
+}
+
+// 切换水晶球显示
+function toggleCrystalBall() {
+    const toggle = document.getElementById('crystalBallToggle');
+    const isEnabled = toggle.checked;
+
+    // 保存到localStorage
+    localStorage.setItem('crystalBallEnabled', isEnabled);
+
+    const container = document.querySelector('.crystal-ball-container');
+    if (container) {
+        if (isEnabled) {
+            container.style.display = 'block';
+            // 恢复动画
+            if (window.crystalBallSnow && !window.crystalBallSnow.animationId) {
+                window.crystalBallSnow.animate();
+            }
+            console.log('✅ 水晶球已开启');
+        } else {
+            container.style.display = 'none';
+            // 停止动画以节省性能
+            if (window.crystalBallSnow) {
+                window.crystalBallSnow.destroy();
+            }
+            console.log('❌ 水晶球已关闭');
         }
     }
 }
@@ -1887,7 +1915,23 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }, 1000);
     }
-    
+
+    // 恢复水晶球开关状态
+    const crystalBallEnabled = localStorage.getItem('crystalBallEnabled');
+    if (crystalBallEnabled === 'false') {
+        document.getElementById('crystalBallToggle').checked = false;
+        // 等待水晶球初始化完成后再隐藏
+        setTimeout(() => {
+            const container = document.querySelector('.crystal-ball-container');
+            if (container) {
+                container.style.display = 'none';
+            }
+            if (window.crystalBallSnow) {
+                window.crystalBallSnow.destroy();
+            }
+        }, 1000);
+    }
+
     // 恢复字体选择
     const savedFont = localStorage.getItem('selectedFont');
     if (savedFont) {
