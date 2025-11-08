@@ -4,9 +4,9 @@ class FoodRainMatterSystem {
     constructor(options = {}) {
         // 配置参数
         this.config = {
-            maxFallingFoods: options.maxFallingFoods || 15,  // 减少同时飘落数量
-            maxStackedFoods: options.maxStackedFoods || 40,   // 减少最大堆叠数
-            maxLayers: options.maxLayers || 2,                // 只允许2层
+            maxFoodCount: options.maxFoodCount || 100,  // 屏幕内最大食物数量
+            spawnRate: options.spawnRate || 2,          // 每秒生成2个食物
+            maxLayers: options.maxLayers || 3,          // 最大堆叠层数
             minSize: options.minSize || 20,
             maxSize: options.maxSize || 30,
             foodTypes: [
@@ -33,10 +33,11 @@ class FoodRainMatterSystem {
         this.engine = null;
         this.render = null;
         this.world = null;
-        this.foodBodies = [];  // 存储所有美食刚体及其emoji
+        this.foodBodies = [];  // 存储所有美食刚体及其emoji（按创建时间排序，FIFO队列）
         this.lastSpawnTime = 0;
-        this.spawnInterval = 800;  // 降低生成频率（更慢）
+        this.spawnInterval = 1000 / this.config.spawnRate;  // 每秒2个 = 500ms
         this.groundY = 0;
+        this.needImmediateSpawn = false;  // 点击删除后立即补充标记
 
         this.init();
     }
@@ -95,8 +96,8 @@ class FoodRainMatterSystem {
         // 添加鼠标控制（用于点击移除）
         this.setupMouseControl();
 
-        // 预生成初始堆叠美食（减少到20个）
-        this.preGenerateStackedFoods(20);
+        // 预生成初始美食（减少初始数量，让食物自然下落堆积）
+        this.preGenerateStackedFoods(10);
 
         // 启动引擎（使用Runner）
         this.runner = this.Runner.create();
@@ -139,6 +140,10 @@ class FoodRainMatterSystem {
                     // 移除刚体
                     this.World.remove(this.world, body);
                     this.foodBodies.splice(i, 1);
+
+                    // 标记需要立即补充
+                    this.needImmediateSpawn = true;
+
                     e.stopPropagation();
                     e.preventDefault();
                     break;
@@ -218,14 +223,16 @@ class FoodRainMatterSystem {
         const spawn = () => {
             const currentTime = Date.now();
 
-            if (currentTime - this.lastSpawnTime > this.spawnInterval) {
-                // 只限制总数量，不限制飘落数量
-                if (this.foodBodies.length < this.config.maxStackedFoods) {
-                    const x = Math.random() * window.innerWidth;
-                    const y = -50;
-                    this.createFoodBody(x, y);
-                    this.lastSpawnTime = currentTime;
-                }
+            // 检查是否需要生成新食物
+            const shouldSpawn = this.needImmediateSpawn ||
+                               (currentTime - this.lastSpawnTime > this.spawnInterval);
+
+            if (shouldSpawn && this.foodBodies.length < this.config.maxFoodCount) {
+                const x = Math.random() * window.innerWidth;
+                const y = -50;
+                this.createFoodBody(x, y);
+                this.lastSpawnTime = currentTime;
+                this.needImmediateSpawn = false;  // 重置立即生成标记
             }
 
             // 清理和高度控制
@@ -235,7 +242,7 @@ class FoodRainMatterSystem {
         };
 
         requestAnimationFrame(spawn);
-        console.log('美食生成循环已启动');
+        console.log(`美食生成循环已启动 - 最大${this.config.maxFoodCount}个，每秒${this.config.spawnRate}个`);
     }
 
     startRenderLoop() {
@@ -313,18 +320,16 @@ class FoodRainMatterSystem {
             this.removeBottomLayer();
         }
 
-        // 限制总数量
-        if (this.foodBodies.length > this.config.maxStackedFoods) {
-            const removeCount = this.foodBodies.length - this.config.maxStackedFoods;
-            // 移除最底层的
+        // 限制总数量 - FIFO队列方式，删除最早创建的
+        if (this.foodBodies.length > this.config.maxFoodCount) {
+            const removeCount = this.foodBodies.length - this.config.maxFoodCount;
+
+            // 删除最早创建的（数组前面的）
             for (let i = 0; i < removeCount; i++) {
-                const bottomFood = this.findBottomFood();
-                if (bottomFood) {
-                    this.World.remove(this.world, bottomFood.body);
-                    const index = this.foodBodies.indexOf(bottomFood);
-                    if (index > -1) {
-                        this.foodBodies.splice(index, 1);
-                    }
+                const oldestFood = this.foodBodies[0];  // 第一个是最早的
+                if (oldestFood) {
+                    this.World.remove(this.world, oldestFood.body);
+                    this.foodBodies.shift();  // 从头部删除
                 }
             }
         }
@@ -412,10 +417,11 @@ class FoodRainMatterSystem {
 document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         window.foodRainMatter = new FoodRainMatterSystem({
-            maxFallingFoods: 15,
-            maxStackedFoods: 40,
-            maxLayers: 2
+            maxFoodCount: 100,   // 屏幕内最大100个食物
+            spawnRate: 2,        // 每秒生成2个食物
+            maxLayers: 3         // 最大堆叠3层
         });
-        console.log('🍎 Matter.js 美食堆叠雨特效已启动 - 点击美食可消除！');
+        console.log('🍎 Matter.js 美食堆叠雨特效已启动');
+        console.log('📊 配置: 最大100个食物，每秒生成2个，点击消除立即补充');
     }, 800);
 });
