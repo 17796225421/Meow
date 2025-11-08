@@ -276,6 +276,62 @@ class FoodRainSystem {
     removeFood(food) {
         food.state = FoodState.REMOVING;
         food.removeProgress = 0;
+
+        // 检查是否有美食在这个美食上方（依赖它支撑）
+        this.checkAndDropFoodsAbove(food);
+    }
+
+    checkAndDropFoodsAbove(removedFood) {
+        // 找出所有在被移除美食上方的美食
+        for (let food of this.stackedFoods) {
+            if (food.state !== FoodState.STACKED) continue;
+            if (food === removedFood) continue;
+
+            // 如果美食在被移除美食的上方附近（y值更小，且x位置接近）
+            const dx = Math.abs(food.x - removedFood.x);
+            const dy = removedFood.y - food.y;
+
+            // 检查是否在上方并且距离足够近（可能依赖这个美食支撑）
+            if (dy > 0 && dy < 100 && dx < 50) {
+                // 检查下方是否还有其他支撑
+                if (!this.hasOtherSupport(food, removedFood)) {
+                    // 没有其他支撑，让它重新掉落
+                    food.state = FoodState.FALLING;
+                    food.speedY = 0.1;  // 给一个小的初始下落速度
+                    food.speedX = this.randomRange(-0.2, 0.2);
+                    food.rotationSpeed = this.randomRange(-1, 1);
+
+                    // 重新初始化雪花飘动参数
+                    food.swingAmplitude = this.randomRange(0.3, 0.8);
+                    food.swingSpeed = this.randomRange(0.01, 0.03);
+                    food.swingOffset = Math.random() * Math.PI * 2;
+                    food.driftX = this.randomRange(-0.1, 0.1);
+                }
+            }
+        }
+    }
+
+    hasOtherSupport(food, excludeFood) {
+        // 检查这个美食下方是否有其他美食支撑（除了被移除的那个）
+        for (let other of this.stackedFoods) {
+            if (other.state !== FoodState.STACKED) continue;
+            if (other === food || other === excludeFood) continue;
+
+            const dx = Math.abs(food.x - other.x);
+            const dy = food.y - other.y;
+
+            // 如果下方有接近的美食，说明有支撑
+            if (dy > 0 && dy < 50 && dx < 40) {
+                return true;
+            }
+        }
+
+        // 检查是否接近地面
+        if (food.y >= this.groundY - 40) {
+            return true;
+        }
+
+        return false;
     }
 
     handleDocumentClick(e) {
@@ -406,6 +462,19 @@ class FoodRainSystem {
             }
             return !shouldRemove;
         });
+
+        // 检查堆叠美食中是否有重新变成FALLING状态的
+        const refallingFoods = [];
+        this.stackedFoods = this.stackedFoods.filter(food => {
+            if (food.state === FoodState.FALLING) {
+                refallingFoods.push(food);
+                return false;  // 从堆叠列表移除
+            }
+            return true;
+        });
+
+        // 将重新掉落的美食加入飘落列表
+        this.fallingFoods.push(...refallingFoods);
 
         // 更新和绘制堆叠的美食
         this.stackedFoods = this.stackedFoods.filter(food => {
