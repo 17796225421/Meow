@@ -1788,3 +1788,139 @@ a:hover {
     border-color: rgba(255, 200, 100, 0.3);
 }
 
+
+/* =========================
+   设置面板样式
+   ========================= */
+
+/* 设置按钮 - 右上角齿轮 */
+.settings-button {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #FFB7D5, #87CEEB);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(255, 183, 213, 0.4);
+    z-index: 9999;
+    transition: all 0.3s ease;
+}
+
+.settings-button:hover {
+    transform: rotate(90deg) scale(1.1);
+    box-shadow: 0 6px 20px rgba(255, 183, 213, 0.6);
+}
+
+.settings-button i {
+    font-size: 24px;
+    color: white;
+}
+
+/* 设置面板 */
+.settings-panel {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    width: 320px;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(255, 183, 213, 0.3);
+    border: 2px solid rgba(255, 183, 213, 0.3);
+    z-index: 9998;
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+    pointer-events: none;
+    transition: all 0.3s ease;
+}
+
+.settings-panel.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+.settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 2px solid rgba(255, 183, 213, 0.2);
+}
+
+.settings-header h5 {
+    margin: 0;
+    color: #E8B4D6;
+    font-weight: 600;
+}
+
+.settings-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #E8B4D6;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.settings-close:hover {
+    background: rgba(255, 183, 213, 0.2);
+    transform: rotate(90deg);
+}
+
+.settings-content {
+    padding: 20px;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid rgba(255, 183, 213, 0.1);
+}
+
+.setting-item:last-child {
+    border-bottom: none;
+}
+
+.setting-label {
+    font-size: 15px;
+    color: #666;
+    font-weight: 500;
+}
+
+.setting-label i {
+    margin-right: 8px;
+    color: #E8B4D6;
+}
+
+.form-check-input {
+    width: 50px;
+    height: 26px;
+    cursor: pointer;
+}
+
+.form-check-input:checked {
+    background-color: #FFB7D5;
+    border-color: #FFB7D5;
+}
+
+#fontSelector {
+    width: 140px;
+    border: 2px solid rgba(255, 183, 213, 0.3);
+    border-radius: 10px;
+    padding: 6px 12px;
+}

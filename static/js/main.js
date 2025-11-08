@@ -1822,3 +1822,76 @@ function downloadImage(index) {
     link.download = image.name;
     link.click();
 }
+
+// ========== 设置面板控制 ==========
+
+// 切换设置面板显示/隐藏
+function toggleSettingsPanel() {
+    const panel = document.getElementById('settingsPanel');
+    panel.classList.toggle('show');
+}
+
+// 切换美食雨显示
+function toggleFoodRain() {
+    const toggle = document.getElementById('foodRainToggle');
+    const isEnabled = toggle.checked;
+    
+    // 保存到localStorage
+    localStorage.setItem('foodRainEnabled', isEnabled);
+    
+    if (window.foodRainMatter) {
+        if (isEnabled) {
+            // 显示美食雨canvas
+            if (window.foodRainMatter.canvas) {
+                window.foodRainMatter.canvas.style.display = 'block';
+            }
+            console.log('✅ 美食雨已开启');
+        } else {
+            // 隐藏美食雨canvas
+            if (window.foodRainMatter.canvas) {
+                window.foodRainMatter.canvas.style.display = 'none';
+            }
+            console.log('❌ 美食雨已关闭');
+        }
+    }
+}
+
+// 切换字体
+function changeFont() {
+    const selector = document.getElementById('fontSelector');
+    const font = selector.value;
+    
+    // 保存到localStorage
+    localStorage.setItem('selectedFont', font);
+    
+    if (font === 'yahei') {
+        document.body.style.fontFamily = "'Microsoft YaHei', 'PingFang SC', 'Helvetica Neue', Arial, sans-serif";
+        console.log('🔤 已切换到: 微软雅黑');
+    } else {
+        // 恢复默认字体（style.css中定义的）
+        document.body.style.fontFamily = '';
+        console.log('🔤 已切换到: 默认字体');
+    }
+}
+
+// 页面加载时恢复设置
+document.addEventListener('DOMContentLoaded', function() {
+    // 恢复美食雨开关状态
+    const foodRainEnabled = localStorage.getItem('foodRainEnabled');
+    if (foodRainEnabled === 'false') {
+        document.getElementById('foodRainToggle').checked = false;
+        // 等待美食雨初始化完成后再隐藏
+        setTimeout(() => {
+            if (window.foodRainMatter && window.foodRainMatter.canvas) {
+                window.foodRainMatter.canvas.style.display = 'none';
+            }
+        }, 1000);
+    }
+    
+    // 恢复字体选择
+    const savedFont = localStorage.getItem('selectedFont');
+    if (savedFont) {
+        document.getElementById('fontSelector').value = savedFont;
+        changeFont();
+    }
+});
