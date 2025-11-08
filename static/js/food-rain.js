@@ -12,8 +12,8 @@ class FoodRainSystem {
         // 配置参数
         this.config = {
             maxFallingFoods: options.maxFallingFoods || 50,  // 同时飘落的美食数
-            maxStackedFoods: options.maxStackedFoods || 60,   // 最大堆叠数
-            maxLayers: options.maxLayers || 6,                // 最大堆叠层数
+            maxStackedFoods: options.maxStackedFoods || 80,   // 最大堆叠数
+            maxLayers: options.maxLayers || 3,                // 最大堆叠层数（降低以防止堆太高）
             minSize: options.minSize || 20,
             maxSize: options.maxSize || 30,
             minSpeed: options.minSpeed || 0.05,   // 极慢的初始速度
@@ -172,24 +172,29 @@ class FoodRainSystem {
     }
 
     autoCleanup() {
+        // 检查堆叠层数（优先处理）
+        const layerCount = this.calculateLayers();
+        if (layerCount > this.config.maxLayers) {
+            // 移除最底层的所有美食
+            const bottomFoods = this.getBottomLayerFoods();
+            bottomFoods.forEach(food => {
+                // 直接删除，不触发物理效果（避免连锁反应）
+                food.state = FoodState.REMOVING;
+                food.removeProgress = 0;
+            });
+        }
+
         // 限制堆叠数量
         if (this.stackedFoods.length > this.config.maxStackedFoods) {
             const removeCount = this.stackedFoods.length - this.config.maxStackedFoods;
             for (let i = 0; i < removeCount; i++) {
                 // 移除最底层的
                 const lowestFood = this.findLowestFood();
-                if (lowestFood) {
-                    this.removeFood(lowestFood);
+                if (lowestFood && lowestFood.state === FoodState.STACKED) {
+                    lowestFood.state = FoodState.REMOVING;
+                    lowestFood.removeProgress = 0;
                 }
             }
-        }
-
-        // 检查堆叠层数
-        const layerCount = this.calculateLayers();
-        if (layerCount > this.config.maxLayers) {
-            // 移除最底层
-            const bottomFoods = this.getBottomLayerFoods();
-            bottomFoods.forEach(food => this.removeFood(food));
         }
     }
 
@@ -245,7 +250,7 @@ class FoodRainSystem {
     calculateLayers() {
         if (this.stackedFoods.length === 0) return 0;
 
-        const layerHeight = 35;  // 每层大约高度
+        const layerHeight = 30;  // 每层大约高度
         let maxHeight = 0;
 
         for (let food of this.stackedFoods) {
@@ -259,7 +264,7 @@ class FoodRainSystem {
     }
 
     getBottomLayerFoods() {
-        const layerHeight = 40;
+        const layerHeight = 35;
         const bottomFoods = [];
 
         for (let food of this.stackedFoods) {
@@ -271,6 +276,54 @@ class FoodRainSystem {
         }
 
         return bottomFoods;
+    }
+
+    // 每帧检查所有堆叠美食是否失去支撑
+    checkAllStackedSupport() {
+        const foodsToCheck = [...this.stackedFoods];
+
+        for (let food of foodsToCheck) {
+            if (food.state !== FoodState.STACKED) continue;
+
+            // 检查是否失去支撑
+            if (!this.hasSupport(food)) {
+                // 没有支撑，让它掉落
+                food.state = FoodState.FALLING;
+                food.speedY = 0.1;
+                food.speedX = this.randomRange(-0.2, 0.2);
+                food.rotationSpeed = this.randomRange(-1, 1);
+
+                // 重新初始化雪花飘动参数
+                food.swingAmplitude = this.randomRange(0.3, 0.8);
+                food.swingSpeed = this.randomRange(0.01, 0.03);
+                food.swingOffset = Math.random() * Math.PI * 2;
+                food.driftX = this.randomRange(-0.1, 0.1);
+            }
+        }
+    }
+
+    // 检查美食是否有支撑
+    hasSupport(food) {
+        // 检查是否接近地面
+        if (food.y >= this.groundY - 30) {
+            return true;
+        }
+
+        // 检查下方是否有其他美食支撑
+        for (let other of this.stackedFoods) {
+            if (other.state !== FoodState.STACKED) continue;
+            if (other === food) continue;
+
+            const dx = Math.abs(food.x - other.x);
+            const dy = food.y - other.y;
+
+            // 如果下方有接近的美食，说明有支撑
+            if (dy > 0 && dy < 40 && dx < 35) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     removeFood(food) {
@@ -476,6 +529,13 @@ class FoodRainSystem {
         // 将重新掉落的美食加入飘落列表
         this.fallingFoods.push(...refallingFoods);
 
+        // 每隔一段时间检查堆叠美食的支撑状态
+        if (!this.lastSupportCheckTime) this.lastSupportCheckTime = 0;
+        if (currentTime - this.lastSupportCheckTime > 200) {  // 每200ms检查一次
+            this.checkAllStackedSupport();
+            this.lastSupportCheckTime = currentTime;
+        }
+
         // 更新和绘制堆叠的美食
         this.stackedFoods = this.stackedFoods.filter(food => {
             const shouldRemove = this.updateFood(food, 16);
@@ -518,8 +578,8 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         window.foodRain = new FoodRainSystem({
             maxFallingFoods: 50,
-            maxStackedFoods: 60,
-            maxLayers: 6,
+            maxStackedFoods: 80,
+            maxLayers: 3,
             minSize: 20,
             maxSize: 30,
             minSpeed: 0.05,
