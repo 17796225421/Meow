@@ -95,8 +95,8 @@ class FoodRainMatterSystem {
         // 添加鼠标控制（用于点击移除）
         this.setupMouseControl();
 
-        // 预生成初始美食（减少初始数量，让食物自然下落堆积）
-        this.preGenerateStackedFoods(10);
+        // 预生成初始美食（90个）
+        this.preGenerateStackedFoods(90);
 
         // 启动引擎（使用Runner）
         this.runner = this.Runner.create();
