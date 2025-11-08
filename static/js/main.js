@@ -21,6 +21,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 检查服务状态
     checkServiceStatus();
+
+    // 监听tab切换，录播tab不显示特效
+    setupTabEffectsControl();
 });
 
 // 绑定事件
@@ -1829,6 +1832,59 @@ function downloadImage(index) {
 function toggleSettingsPanel() {
     const panel = document.getElementById('settingsPanel');
     panel.classList.toggle('show');
+}
+
+// 设置tab切换时的特效控制（录播tab不显示特效）
+function setupTabEffectsControl() {
+    const tabButtons = document.querySelectorAll('#mainTabs button[data-bs-toggle="pill"]');
+
+    tabButtons.forEach(button => {
+        button.addEventListener('shown.bs.tab', function(event) {
+            const targetId = event.target.getAttribute('data-bs-target');
+
+            // 录播tab不显示特效
+            if (targetId === '#recordings-panel') {
+                hideEffects();
+            } else {
+                // 其他tab恢复特效（根据用户设置）
+                restoreEffects();
+            }
+        });
+    });
+}
+
+// 隐藏所有特效
+function hideEffects() {
+    // 隐藏美食雨
+    if (window.foodRainMatter && window.foodRainMatter.canvas) {
+        window.foodRainMatter.canvas.style.display = 'none';
+    }
+
+    // 隐藏水晶球
+    const crystalBall = document.querySelector('.crystal-ball-container');
+    if (crystalBall) {
+        crystalBall.style.display = 'none';
+    }
+}
+
+// 恢复特效显示（根据用户设置）
+function restoreEffects() {
+    // 恢复美食雨（根据用户设置）
+    const foodRainEnabled = localStorage.getItem('foodRainEnabled');
+    if (foodRainEnabled !== 'false') {
+        if (window.foodRainMatter && window.foodRainMatter.canvas) {
+            window.foodRainMatter.canvas.style.display = 'block';
+        }
+    }
+
+    // 恢复水晶球（根据用户设置）
+    const crystalBallEnabled = localStorage.getItem('crystalBallEnabled');
+    if (crystalBallEnabled !== 'false') {
+        const crystalBall = document.querySelector('.crystal-ball-container');
+        if (crystalBall) {
+            crystalBall.style.display = 'block';
+        }
+    }
 }
 
 // 切换美食雨显示
