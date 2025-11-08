@@ -37,6 +37,7 @@ class FoodRainMatterSystem {
         this.spawnInterval = 1000 / this.config.spawnRate;  // 每秒2个 = 500ms
         this.groundY = 0;
         this.needImmediateSpawn = false;  // 点击删除后立即补充标记
+        this.crystalBallBody = null;  // 水晶球碰撞体引用
 
         this.init();
     }
@@ -92,6 +93,9 @@ class FoodRainMatterSystem {
         this.World.add(this.world, ground);
         console.log('地面创建在 Y:', this.groundY - 10, '窗口高度:', window.innerHeight);
 
+        // 添加水晶球碰撞体
+        this.createCrystalBallCollider();
+
         // 添加鼠标控制（用于点击移除）
         this.setupMouseControl();
 
@@ -110,6 +114,45 @@ class FoodRainMatterSystem {
 
         // 监听窗口大小变化
         window.addEventListener('resize', () => this.handleResize());
+    }
+
+    createCrystalBallCollider() {
+        // 水晶球在页面右下角：bottom: 30px, right: 30px
+        // 球体尺寸：180px 宽 x 170px 高（椭圆形）
+        const ballWidth = 180;
+        const ballHeight = 170;
+        const bottomOffset = 30;
+        const rightOffset = 30;
+
+        // 计算水晶球中心位置
+        const ballCenterX = window.innerWidth - rightOffset - ballWidth / 2;
+        const ballCenterY = window.innerHeight - bottomOffset - 55 - ballHeight / 2; // 55是底座高度
+
+        // 创建椭圆形碰撞体（用圆形近似，半径取平均值）
+        const radius = (ballWidth + ballHeight) / 4; // 取平均半径
+
+        this.crystalBallBody = this.Bodies.circle(
+            ballCenterX,
+            ballCenterY,
+            radius,
+            {
+                isStatic: true,
+                label: 'crystal-ball',
+                restitution: 0.3,  // 稍微有点弹性
+                friction: 0.5,
+                render: {
+                    fillStyle: 'transparent',
+                    strokeStyle: 'transparent'
+                }
+            }
+        );
+
+        this.World.add(this.world, this.crystalBallBody);
+        console.log('💎 水晶球碰撞体已创建:', {
+            x: ballCenterX,
+            y: ballCenterY,
+            radius: radius
+        });
     }
 
     setupMouseControl() {
@@ -346,6 +389,21 @@ class FoodRainMatterSystem {
             this.Body.setPosition(ground, {
                 x: window.innerWidth / 2,
                 y: this.groundY - 10
+            });
+        }
+
+        // 更新水晶球位置
+        if (this.crystalBallBody) {
+            const ballWidth = 180;
+            const ballHeight = 170;
+            const bottomOffset = 30;
+            const rightOffset = 30;
+            const ballCenterX = window.innerWidth - rightOffset - ballWidth / 2;
+            const ballCenterY = window.innerHeight - bottomOffset - 55 - ballHeight / 2;
+
+            this.Body.setPosition(this.crystalBallBody, {
+                x: ballCenterX,
+                y: ballCenterY
             });
         }
     }
