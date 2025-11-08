@@ -226,15 +226,21 @@ class CrystalBallSnow {
         // 更新旋转角度
         this.rotation += this.rotationSpeed;
 
-        // 检查是否旋转了180度（π弧度）
-        if (Math.floor(this.rotation / Math.PI) > this.lastRotationCheck) {
-            this.lastRotationCheck = Math.floor(this.rotation / Math.PI);
-            // 随机切换图片
-            const oldIndex = this.currentImageIndex;
-            do {
-                this.currentImageIndex = Math.floor(Math.random() * this.centerImages.length);
-            } while (this.currentImageIndex === oldIndex && this.centerImages.length > 1);
-            console.log(`💫 水晶球图片切换: ${this.currentImageIndex + 1}`);
+        // 检查旋转角度，每90度检查一次
+        const quarterRotations = Math.floor(this.rotation / (Math.PI / 2));
+        if (quarterRotations > this.lastRotationCheck) {
+            this.lastRotationCheck = quarterRotations;
+
+            // 只在奇数倍的90度时切换（图片最窄的侧面）
+            // quarterRotations = 1 (90°), 3 (270°), 5 (450°)...
+            if (quarterRotations % 2 === 1) {
+                // 随机切换图片
+                const oldIndex = this.currentImageIndex;
+                do {
+                    this.currentImageIndex = Math.floor(Math.random() * this.centerImages.length);
+                } while (this.currentImageIndex === oldIndex && this.centerImages.length > 1);
+                console.log(`💫 水晶球图片切换 (侧面): ${this.currentImageIndex + 1}`);
+            }
         }
 
         // 按深度排序（远的先画）
