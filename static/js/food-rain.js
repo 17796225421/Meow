@@ -11,16 +11,16 @@ class FoodRainSystem {
     constructor(options = {}) {
         // 配置参数
         this.config = {
-            maxFallingFoods: options.maxFallingFoods || 20,  // 同时飘落的美食数
+            maxFallingFoods: options.maxFallingFoods || 50,  // 同时飘落的美食数
             maxStackedFoods: options.maxStackedFoods || 60,   // 最大堆叠数
             maxLayers: options.maxLayers || 6,                // 最大堆叠层数
             minSize: options.minSize || 20,
             maxSize: options.maxSize || 30,
-            minSpeed: options.minSpeed || 1.5,
-            maxSpeed: options.maxSpeed || 4.0,
+            minSpeed: options.minSpeed || 0.05,   // 极慢的初始速度
+            maxSpeed: options.maxSpeed || 0.15,   // 极慢的最大速度
             bounceStrength: options.bounceStrength || 0.4,
             friction: options.friction || 0.92,
-            gravity: options.gravity || 0.3,
+            gravity: options.gravity || 0.02,     // 极低重力，像雪花
             foodTypes: [
                 '🍎', '🍇', '🍓', '🫐', '🍉', '🍒', '🥞', '🧈',
                 '🍞', '🍗', '🥩', '🍖', '🍟', '🌮', '🫔', '🫕',
@@ -39,7 +39,7 @@ class FoodRainSystem {
         this.ctx = null;
         this.groundY = 0;
         this.lastSpawnTime = 0;
-        this.spawnInterval = 800;  // 生成间隔(ms)
+        this.spawnInterval = 400;  // 生成间隔(ms)，更频繁生成
 
         this.init();
     }
@@ -97,16 +97,21 @@ class FoodRainSystem {
             x: Math.random() * this.canvas.width,
             y: isStacked ? this.groundY - size : -size,
             size: size,
-            speedX: this.randomRange(-0.5, 0.5),
+            speedX: this.randomRange(-0.2, 0.2),  // 初始横向速度
             speedY: isStacked ? 0 : this.randomRange(this.config.minSpeed, this.config.maxSpeed),
             emoji: this.config.foodTypes[Math.floor(Math.random() * this.config.foodTypes.length)],
             rotation: Math.random() * 360,
-            rotationSpeed: this.randomRange(-3, 3),
+            rotationSpeed: this.randomRange(-1, 1),  // 减慢旋转速度
             opacity: this.randomRange(0.85, 1.0),
             state: isStacked ? FoodState.STACKED : FoodState.FALLING,
             bounceCount: 0,
             scale: 1.0,
-            removeProgress: 0
+            removeProgress: 0,
+            // 雪花飘动效果参数
+            swingAmplitude: this.randomRange(0.3, 0.8),  // 摆动幅度
+            swingSpeed: this.randomRange(0.01, 0.03),     // 摆动速度
+            swingOffset: Math.random() * Math.PI * 2,     // 摆动初始偏移
+            driftX: this.randomRange(-0.1, 0.1)           // 随机横向漂移
         };
     }
 
@@ -313,9 +318,13 @@ class FoodRainSystem {
             // 应用重力
             food.speedY += this.config.gravity;
 
+            // 雪花飘动效果：正弦波横向移动
+            food.swingOffset += food.swingSpeed;
+            const swingX = Math.sin(food.swingOffset) * food.swingAmplitude;
+
             // 更新位置
             food.y += food.speedY;
-            food.x += food.speedX;
+            food.x += food.speedX + swingX + food.driftX;
 
             // 更新旋转
             food.rotation += food.rotationSpeed;
@@ -439,13 +448,14 @@ class FoodRainSystem {
 document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         window.foodRain = new FoodRainSystem({
-            maxFallingFoods: 20,
+            maxFallingFoods: 50,
             maxStackedFoods: 60,
             maxLayers: 6,
             minSize: 20,
             maxSize: 30,
-            minSpeed: 1.5,
-            maxSpeed: 4.0
+            minSpeed: 0.05,
+            maxSpeed: 0.15,
+            gravity: 0.02
         });
         console.log('🍎 美食堆叠雨特效已启动 - 点击美食可消除！');
     }, 800);
