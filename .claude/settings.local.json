@@ -3,7 +3,13 @@
     "allow": [
       "WebSearch",
       "Bash(powershell:*)",
-      "WebFetch(domain:8.135.33.2)"
+      "WebFetch(domain:8.135.33.2)",
+      "WebFetch(domain:brm.io)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:thedevnews.com)",
+      "WebFetch(domain:alexandergottlieb.com)",
+      "WebFetch(domain:betterprogramming.pub)",
+      "WebFetch(domain:stackoverflow.com)"
     ],
     "deny": [],
     "ask": []

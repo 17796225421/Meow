@@ -278,53 +278,6 @@ class FoodRainSystem {
         return bottomFoods;
     }
 
-    // 每帧检查所有堆叠美食是否失去支撑
-    checkAllStackedSupport() {
-        const foodsToCheck = [...this.stackedFoods];
-
-        for (let food of foodsToCheck) {
-            if (food.state !== FoodState.STACKED) continue;
-
-            // 检查是否失去支撑
-            if (!this.hasSupport(food)) {
-                // 没有支撑，让它掉落
-                food.state = FoodState.FALLING;
-                food.speedY = 0.1;
-                food.speedX = this.randomRange(-0.2, 0.2);
-                food.rotationSpeed = this.randomRange(-1, 1);
-
-                // 重新初始化雪花飘动参数
-                food.swingAmplitude = this.randomRange(0.3, 0.8);
-                food.swingSpeed = this.randomRange(0.01, 0.03);
-                food.swingOffset = Math.random() * Math.PI * 2;
-                food.driftX = this.randomRange(-0.1, 0.1);
-            }
-        }
-    }
-
-    // 检查美食是否有支撑
-    hasSupport(food) {
-        // 检查是否接近地面
-        if (food.y >= this.groundY - 30) {
-            return true;
-        }
-
-        // 检查下方是否有其他美食支撑
-        for (let other of this.stackedFoods) {
-            if (other.state !== FoodState.STACKED) continue;
-            if (other === food) continue;
-
-            const dx = Math.abs(food.x - other.x);
-            const dy = food.y - other.y;
-
-            // 如果下方有接近的美食，说明有支撑
-            if (dy > 0 && dy < 40 && dx < 35) {
-                return true;
-            }
-        }
-
-        return false;
-    }
 
     removeFood(food) {
         food.state = FoodState.REMOVING;
@@ -528,13 +481,6 @@ class FoodRainSystem {
 
         // 将重新掉落的美食加入飘落列表
         this.fallingFoods.push(...refallingFoods);
-
-        // 每隔一段时间检查堆叠美食的支撑状态
-        if (!this.lastSupportCheckTime) this.lastSupportCheckTime = 0;
-        if (currentTime - this.lastSupportCheckTime > 200) {  // 每200ms检查一次
-            this.checkAllStackedSupport();
-            this.lastSupportCheckTime = currentTime;
-        }
 
         // 更新和绘制堆叠的美食
         this.stackedFoods = this.stackedFoods.filter(food => {
