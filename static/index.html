@@ -76,7 +76,7 @@
         <!-- 标签页导航 -->
         <ul class="nav nav-pills nav-fill mb-4 tab-nav" id="mainTabs" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active tab-button" id="tts-tab" data-bs-toggle="pill" data-bs-target="#tts-panel" type="button" role="tab">
+                <button class="nav-link active tab-button" id="tts-tab" data-bs-toggle="pill" data-bs-target="#tts-panel" type="button" role="tab" onclick="checkTtsAccess()">
                     <i class="bi bi-mic-fill"></i> 语音生成器
                 </button>
             </li>
@@ -103,7 +103,30 @@
             <div class="tab-pane fade show active" id="tts-panel" role="tabpanel">
                 <div class="main-card">
                     <div class="card shadow-lg">
-                        <div class="card-body p-4">
+                        <!-- 密码验证界面 -->
+                        <div id="ttsPasswordPrompt" class="card-body p-5 text-center" style="display: none;">
+                            <div class="mb-4">
+                                <i class="bi bi-lock-fill text-warning" style="font-size: 4rem;"></i>
+                            </div>
+                            <h4 class="mb-4">此功能已废弃</h4>
+                            <p class="text-muted mb-4">如需访问，请输入口令</p>
+                            <div class="row justify-content-center">
+                                <div class="col-md-6">
+                                    <div class="input-group mb-3">
+                                        <input type="text" id="ttsPassword" class="form-control form-control-lg" placeholder="请输入口令" onkeypress="if(event.key==='Enter') verifyTtsPassword()">
+                                        <button class="btn btn-primary" onclick="verifyTtsPassword()">
+                                            <i class="bi bi-key-fill"></i> 验证
+                                        </button>
+                                    </div>
+                                    <div id="ttsPasswordError" class="text-danger small" style="display: none;">
+                                        <i class="bi bi-exclamation-circle"></i> 口令错误，请重试
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 内容区域（验证后显示） -->
+                        <div id="ttsContent" class="card-body p-4">
                             <!-- 文本输入区 -->
                             <div class="mb-4">
                                 <label class="form-label fw-bold">
@@ -175,6 +198,8 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                        <!-- 关闭 ttsContent div -->
                         </div>
                     </div>
                 </div>

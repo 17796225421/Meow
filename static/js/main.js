@@ -10,6 +10,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const toastEl = document.getElementById('toast');
     toastInstance = new bootstrap.Toast(toastEl);
 
+    // 检查语音生成器访问权限（页面加载时检查）
+    checkTtsAccess();
+
     // 加载情感选项
     loadEmotions();
 
@@ -989,6 +992,54 @@ function closeEmbeddedPlayer() {
 
     // 隐藏播放器
     player.style.display = 'none';
+}
+
+// ========== 语音生成器密码保护 ==========
+
+// 检查语音生成器访问权限
+function checkTtsAccess() {
+    // 检查是否已验证
+    const isVerified = sessionStorage.getItem('ttsVerified');
+
+    if (isVerified === 'true') {
+        showTtsContent();
+    } else {
+        // 显示密码提示界面
+        document.getElementById('ttsPasswordPrompt').style.display = 'block';
+        document.getElementById('ttsContent').style.display = 'none';
+        document.getElementById('ttsPassword').value = '';
+        document.getElementById('ttsPasswordError').style.display = 'none';
+    }
+}
+
+// 验证语音生成器密码
+function verifyTtsPassword() {
+    const passwordInput = document.getElementById('ttsPassword');
+    const passwordError = document.getElementById('ttsPasswordError');
+    const correctPassword = '小垚的语音生成器';
+
+    if (passwordInput.value === correctPassword) {
+        // 密码正确
+        sessionStorage.setItem('ttsVerified', 'true');
+        showTtsContent();
+        showToast('验证成功！欢迎使用语音生成器', 'success');
+    } else {
+        // 密码错误
+        passwordError.style.display = 'block';
+        passwordInput.value = '';
+        passwordInput.focus();
+
+        // 3秒后隐藏错误提示
+        setTimeout(() => {
+            passwordError.style.display = 'none';
+        }, 3000);
+    }
+}
+
+// 显示语音生成器内容
+function showTtsContent() {
+    document.getElementById('ttsPasswordPrompt').style.display = 'none';
+    document.getElementById('ttsContent').style.display = 'block';
 }
 
 // ========== 好朋友功能 ==========
