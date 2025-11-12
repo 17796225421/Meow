@@ -382,6 +382,20 @@ body {
     padding: 10px;
 }
 
+/* 标签页内容容器 */
+.tab-content {
+    position: relative;
+}
+
+/* 标签页面板 - 确保非活动标签不占用空间 */
+.tab-pane {
+    display: none;
+}
+
+.tab-pane.active {
+    display: block;
+}
+
 .tab-button {
     color: white !important;
     font-weight: 600;
